@@ -3,689 +3,2013 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator - Create Stunning Visuals</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#6366f1',
-                        secondary: '#8b5cf6',
-                        accent: '#06b6d4'
-                    }
-                }
-            }
-        }
-    </script>
+    <title>AI Image Generator | Gemini API</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #ec4899;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        body {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: var(--light);
+            min-height: 100vh;
+            line-height: 1.6;
         }
-        
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
-        .drag-over {
-            border-color: #06b6d4 !important;
-            background-color: rgba(6, 182, 212, 0.1) !important;
+
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
         }
-        
-        .image-preview {
+
+        .workflow-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gray);
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--dark);
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border: 2px solid var(--gray);
             transition: all 0.3s ease;
         }
-        
-        .image-preview:hover {
-            transform: scale(1.05);
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
-        
-        .loading-spinner {
-            animation: spin 1s linear infinite;
+
+        .step.completed .step-number {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
         }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+            text-align: center;
         }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
+
+        .step.active .step-label {
+            color: var(--light);
         }
-        
+
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
+        .upload-area {
+            border: 2px dashed var(--gray);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+        }
+
+        .upload-area i {
+            font-size: 48px;
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .upload-area p {
+            color: var(--gray);
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--dark);
+            border: 1px solid var(--gray);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(55, 65, 81, 0.8);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #0da271;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+        }
+
+        .btn-warning:hover {
+            background: #e59409;
+        }
+
+        .btn-error {
+            background: var(--error);
+        }
+
+        .btn-error:hover {
+            background: #dc2626;
+        }
+
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: var(--dark);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .textarea-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .option-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .option-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .option-card.selected {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.2);
+        }
+
+        .option-card i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .generated-image {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: var(--dark);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .generated-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .gallery-item {
+            background: var(--dark);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .gallery-image {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+
+        .gallery-info {
+            padding: 16px;
+        }
+
+        .gallery-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            background: var(--dark);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--success);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--error);
+        }
+
+        .notification.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .refinement-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--dark);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10;
+            display: none;
+        }
+
+        .suggestions-dropdown.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .text-overlay-controls {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .text-overlay-preview {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background: var(--dark);
+            border-radius: 8px;
+            margin-top: 16px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .text-overlay {
             position: absolute;
+            padding: 10px;
             cursor: move;
             user-select: none;
-            resize: both;
-            overflow: hidden;
-            min-width: 50px;
-            min-height: 20px;
+            max-width: 80%;
+            text-align: center;
         }
-        
-        .refinement-panel {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
+
+        .text-overlay.active {
+            outline: 2px dashed var(--primary);
         }
-        
-        .refinement-panel.open {
-            max-height: 500px;
+
+        .text-overlay-controls .form-row {
+            margin-bottom: 12px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .preset-card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .preset-card:hover {
+            border-color: var(--primary);
+        }
+
+        .preset-card.selected {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.2);
+        }
+
+        .tab-container {
+            margin-top: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-indicator.offline {
+            background: var(--error);
+        }
+
+        @media (max-width: 768px) {
+            .workflow-steps {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .workflow-steps::before {
+                display: none;
+            }
+
+            .step {
+                flex-direction: row;
+                gap: 15px;
+            }
+
+            .step-label {
+                text-align: left;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .refinement-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .options-grid, .preset-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
         }
     </style>
 </head>
-<body class="min-h-screen gradient-bg">
-    <!-- Header -->
-    <header class="glass-effect p-4 mb-8">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-white">AI Image Generator</h1>
-            <div class="flex space-x-4">
-                <button onclick="showGallery()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
-                    Gallery
-                </button>
-                <button onclick="showPresets()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
-                    Presets
-                </button>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Image Generator</h1>
+            <p>Create stunning, professional images with Gemini AI</p>
+            <div class="api-status">
+                <div class="status-indicator" id="api-status"></div>
+                <span id="api-status-text">Checking API connection...</span>
+            </div>
+        </header>
+
+        <div class="workflow-steps">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Upload Images</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Configure Design</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Generate & Refine</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">Gallery</div>
             </div>
         </div>
-    </header>
 
-    <!-- Main Container -->
-    <div class="max-w-7xl mx-auto px-4 pb-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Left Panel - Controls -->
-            <div class="lg:col-span-1 space-y-6">
+        <!-- Step 1: Upload Images -->
+        <div class="step-content active" id="step-1">
+            <div class="card">
+                <h2>Upload Reference Images</h2>
+                <p>Upload one or more images to use as reference for AI generation</p>
                 
-                <!-- Step 1: Upload Images -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-white mb-4">📸 Step 1: Upload Images</h2>
-                    
-                    <div id="dropZone" class="border-2 border-dashed border-white/30 rounded-lg p-8 text-center cursor-pointer hover:border-accent transition-all">
-                        <div class="text-white/70 mb-4">
-                            <svg class="mx-auto h-12 w-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                            </svg>
-                            <p>Drag & drop images here or click to browse</p>
-                            <p class="text-sm">Supports JPG, PNG, WebP</p>
-                        </div>
-                        <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
-                    </div>
-                    
-                    <div id="uploadedImages" class="mt-4 grid grid-cols-2 gap-2"></div>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drag & Drop your images here</p>
+                    <p>or</p>
+                    <button class="btn" id="browse-btn">
+                        <i class="fas fa-folder-open"></i> Browse Files
+                    </button>
+                    <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
                 </div>
 
-                <!-- Step 2: Aspect Ratio -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-white mb-4">📐 Step 2: Aspect Ratio</h2>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="selectAspectRatio('9:16')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="9:16">
-                            Portrait 9:16
-                        </button>
-                        <button onclick="selectAspectRatio('1:1')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="1:1">
-                            Square 1:1
-                        </button>
-                        <button onclick="selectAspectRatio('16:9')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="16:9">
-                            Landscape 16:9
-                        </button>
-                        <button onclick="selectAspectRatio('3:4')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="3:4">
-                            Photo 3:4
-                        </button>
-                        <button onclick="selectAspectRatio('4:3')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="4:3">
-                            Classic 4:3
-                        </button>
-                        <button onclick="selectAspectRatio('21:9')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="21:9">
-                            Banner 21:9
-                        </button>
-                    </div>
+                <div class="preview-container" id="image-preview"></div>
+
+                <div class="form-group">
+                    <label for="topic-input">Or enter a topic (optional):</label>
+                    <input type="text" id="topic-input" class="form-control" placeholder="e.g., Birthday party, Wedding ceremony, Product showcase">
                 </div>
 
-                <!-- Step 3: Style Selection -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-white mb-4">🎨 Step 3: Style</h2>
-                    <div class="space-y-2">
-                        <select id="styleCategory" onchange="updateStyleOptions()" class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30">
-                            <option value="birthday">🎂 Birthday</option>
-                            <option value="wedding">💒 Wedding</option>
-                            <option value="poster">📋 Poster/Flier</option>
-                            <option value="cinematic">🎬 Cinematic</option>
-                            <option value="pinterest">📌 Pinterest</option>
-                            <option value="facebook">📘 Facebook Post</option>
-                            <option value="banner">🏷️ Banner</option>
-                            <option value="anime">🎌 Anime</option>
-                            <option value="cyberpunk">🤖 Cyberpunk</option>
-                            <option value="steampunk">⚙️ Steampunk</option>
-                            <option value="3d">🎯 3D Render</option>
-                            <option value="watercolor">🎨 Watercolor</option>
-                        </select>
-                        
-                        <select id="styleSubtype" class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30">
-                            <option value="card">Card</option>
-                            <option value="flier">Flier</option>
-                            <option value="poster">Poster</option>
-                            <option value="wish">Wish</option>
-                        </select>
-                    </div>
+                <div class="action-buttons">
+                    <button class="btn" id="analyze-btn">
+                        <i class="fas fa-magic"></i> Analyze & Remove Background
+                    </button>
+                    <button class="btn btn-secondary" id="skip-analysis-btn">
+                        <i class="fas fa-forward"></i> Skip Analysis
+                    </button>
                 </div>
-
-                <!-- Step 4: Background Options -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-white mb-4">🖼️ Step 4: Background</h2>
-                    <div class="space-y-3">
-                        <button onclick="setBackgroundOption('remove')" class="bg-red-500/80 hover:bg-red-600 text-white w-full p-3 rounded-lg transition-all">
-                            Remove Background
-                        </button>
-                        <button onclick="setBackgroundOption('keep')" class="bg-green-500/80 hover:bg-green-600 text-white w-full p-3 rounded-lg transition-all">
-                            Keep Original Background
-                        </button>
-                        <button onclick="setBackgroundOption('generate')" class="bg-blue-500/80 hover:bg-blue-600 text-white w-full p-3 rounded-lg transition-all">
-                            Generate New Background
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 5: Concept Generation -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h2 class="text-xl font-semibold text-white mb-4">💡 Step 5: Concept</h2>
-                    <div class="space-y-3">
-                        <button onclick="generateConcept()" class="bg-purple-500/80 hover:bg-purple-600 text-white w-full p-3 rounded-lg transition-all">
-                            Auto-Generate Creative Prompt
-                        </button>
-                        <textarea id="conceptPrompt" placeholder="Or write your own concept/prompt..." class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30 h-24 resize-none placeholder-white/50"></textarea>
-                        <input type="text" id="topicInput" placeholder="Topic for prompt generation..." class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30 placeholder-white/50">
-                    </div>
-                </div>
-
-                <!-- Generate Button -->
-                <button onclick="generateImage()" class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
-                    ✨ Generate Image
-                </button>
             </div>
+        </div>
 
-            <!-- Center Panel - Preview & Results -->
-            <div class="lg:col-span-2 space-y-6">
+        <!-- Step 2: Configure Design -->
+        <div class="step-content" id="step-2">
+            <div class="card">
+                <h2>Configure Your Design</h2>
                 
-                <!-- Preview Area -->
-                <div class="glass-effect rounded-xl p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold text-white">🖼️ Preview & Results</h2>
-                        <div class="flex space-x-2">
-                            <button onclick="toggleRefinementPanel()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
-                                Refine
-                            </button>
-                            <button onclick="generateVariation()" class="bg-accent/80 hover:bg-accent text-white px-4 py-2 rounded-lg transition-all">
-                                Variation
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="previewArea" class="relative bg-white/10 rounded-lg min-h-96 flex items-center justify-center">
-                        <div class="text-white/50 text-center">
-                            <svg class="mx-auto h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <p>Generated images will appear here</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Loading Indicator -->
-                    <div id="loadingIndicator" class="hidden text-center py-8">
-                        <div class="loading-spinner mx-auto h-8 w-8 border-4 border-white/30 border-t-white rounded-full"></div>
-                        <p class="text-white mt-4">Generating your image...</p>
+                <div class="form-group">
+                    <label>Select Design Style:</label>
+                    <div class="options-grid" id="style-options">
+                        <!-- Options will be populated by JavaScript -->
                     </div>
                 </div>
 
-                <!-- Refinement Panel -->
-                <div id="refinementPanel" class="refinement-panel glass-effect rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">🎛️ Refinement Tools</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Text Overlay -->
-                        <div>
-                            <h4 class="text-white font-medium mb-2">Text Overlay</h4>
-                            <input type="text" id="overlayText" placeholder="Enter text..." class="w-full bg-white/20 text-white rounded-lg p-2 border border-white/30 placeholder-white/50 mb-2">
-                            <div class="grid grid-cols-3 gap-2">
-                                <select id="textAlign" class="bg-white/20 text-white rounded p-2 border border-white/30">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="aspect-ratio">Aspect Ratio:</label>
+                        <select id="aspect-ratio" class="form-control">
+                            <option value="9:16">9:16 (Portrait)</option>
+                            <option value="1:1">1:1 (Square)</option>
+                            <option value="16:9">16:9 (Landscape)</option>
+                            <option value="3:4">3:4 (Portrait)</option>
+                            <option value="4:3">4:3 (Landscape)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="output-type">Output Type:</label>
+                        <select id="output-type" class="form-control">
+                            <option value="standard">Standard Quality</option>
+                            <option value="high">High Quality</option>
+                            <option value="premium">Premium Quality (Upscaled)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Quick Presets:</label>
+                    <div class="preset-grid" id="preset-options">
+                        <div class="preset-card" data-preset="poster">
+                            <i class="fas fa-image"></i>
+                            <div>Poster (16:9)</div>
+                        </div>
+                        <div class="preset-card" data-preset="card">
+                            <i class="fas fa-id-card"></i>
+                            <div>Card (1:1)</div>
+                        </div>
+                        <div class="preset-card" data-preset="portrait">
+                            <i class="fas fa-mobile-alt"></i>
+                            <div>Portrait (9:16)</div>
+                        </div>
+                        <div class="preset-card" data-preset="banner">
+                            <i class="fas fa-flag"></i>
+                            <div>Banner (21:9)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="concept-prompt">Creative Concept (Optional):</label>
+                    <textarea id="concept-prompt" class="form-control textarea-control" placeholder="Describe your creative vision or let AI generate ideas..."></textarea>
+                    <div class="action-buttons" style="margin-top: 10px;">
+                        <button class="btn btn-secondary" id="generate-concept-btn">
+                            <i class="fas fa-lightbulb"></i> Generate Creative Ideas
+                        </button>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="back-to-upload">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn" id="generate-image-btn">
+                        <i class="fas fa-bolt"></i> Generate Image
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Generate & Refine -->
+        <div class="step-content" id="step-3">
+            <div class="card">
+                <h2>Generated Image</h2>
+                
+                <div class="generated-image" id="generated-image-container">
+                    <p>Your generated image will appear here</p>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn" id="download-btn">
+                        <i class="fas fa-download"></i> Download Image
+                    </button>
+                    <button class="btn btn-secondary" id="generate-variation-btn">
+                        <i class="fas fa-sync-alt"></i> Generate Variation
+                    </button>
+                    <button class="btn btn-warning" id="refine-btn">
+                        <i class="fas fa-edit"></i> Refine Image
+                    </button>
+                    <button class="btn btn-success" id="save-to-gallery-btn">
+                        <i class="fas fa-save"></i> Save to Gallery
+                    </button>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="back-to-configure">
+                        <i class="fas fa-arrow-left"></i> Back to Configuration
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Gallery -->
+        <div class="step-content" id="step-4">
+            <div class="card">
+                <h2>Your Gallery</h2>
+                <p>All your generated images are saved here</p>
+                
+                <div class="gallery" id="image-gallery">
+                    <!-- Gallery items will be populated by JavaScript -->
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" id="back-to-generate">
+                        <i class="fas fa-arrow-left"></i> Back to Generator
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refinement Modal -->
+    <div class="modal" id="refinement-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="close-refinement-modal">&times;</button>
+            <h2>Refine Your Image</h2>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="ai-refine">AI Refinement</div>
+                    <div class="tab" data-tab="manual-edit">Manual Adjustments</div>
+                    <div class="tab" data-tab="text-overlay">Text Overlay</div>
+                </div>
+                
+                <div class="tab-content active" id="ai-refine">
+                    <div class="form-group">
+                        <label for="refinement-prompt">Describe Changes:</label>
+                        <textarea id="refinement-prompt" class="form-control textarea-control" placeholder="E.g., Change background to beach, add cinematic lighting, remove text..."></textarea>
+                        <div style="position: relative;">
+                            <button class="btn btn-secondary" id="show-suggestions-btn" style="margin-top: 10px;">
+                                <i class="fas fa-lightbulb"></i> Show Suggestions
+                            </button>
+                            <div class="suggestions-dropdown" id="suggestions-dropdown">
+                                <!-- Suggestions will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" id="apply-ai-refinement">
+                        <i class="fas fa-magic"></i> Apply AI Refinement
+                    </button>
+                </div>
+                
+                <div class="tab-content" id="manual-edit">
+                    <div class="refinement-controls">
+                        <div class="control-group">
+                            <label for="brightness">Brightness</label>
+                            <div class="slider-container">
+                                <input type="range" id="brightness" class="slider" min="-100" max="100" value="0">
+                                <span class="slider-value" id="brightness-value">0</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="contrast">Contrast</label>
+                            <div class="slider-container">
+                                <input type="range" id="contrast" class="slider" min="-100" max="100" value="0">
+                                <span class="slider-value" id="contrast-value">0</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="saturation">Saturation</label>
+                            <div class="slider-container">
+                                <input type="range" id="saturation" class="slider" min="-100" max="100" value="0">
+                                <span class="slider-value" id="saturation-value">0</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="shadows">Shadows</label>
+                            <div class="slider-container">
+                                <input type="range" id="shadows" class="slider" min="-100" max="100" value="0">
+                                <span class="slider-value" id="shadows-value">0</span>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label for="highlights">Highlights</label>
+                            <div class="slider-container">
+                                <input type="range" id="highlights" class="slider" min="-100" max="100" value="0">
+                                <span class="slider-value" id="highlights-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn" id="apply-manual-refinement">
+                        <i class="fas fa-check"></i> Apply Manual Adjustments
+                    </button>
+                </div>
+                
+                <div class="tab-content" id="text-overlay">
+                    <div class="text-overlay-controls">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="text-content">Text Content</label>
+                                <input type="text" id="text-content" class="form-control" placeholder="Enter your text here">
+                            </div>
+                            <div class="form-group">
+                                <label for="text-color">Text Color</label>
+                                <input type="color" id="text-color" class="form-control" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="font-family">Font Family</label>
+                                <select id="font-family" class="form-control">
+                                    <option value="Arial, sans-serif">Arial</option>
+                                    <option value="'Times New Roman', serif">Times New Roman</option>
+                                    <option value="'Courier New', monospace">Courier New</option>
+                                    <option value="'Georgia', serif">Georgia</option>
+                                    <option value="'Verdana', sans-serif">Verdana</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="font-size">Font Size</label>
+                                <input type="range" id="font-size" class="slider" min="10" max="72" value="24">
+                                <span class="slider-value" id="font-size-value">24px</span>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="text-align">Text Alignment</label>
+                                <select id="text-align" class="form-control">
                                     <option value="left">Left</option>
-                                    <option value="center">Center</option>
+                                    <option value="center" selected>Center</option>
                                     <option value="right">Right</option>
                                 </select>
-                                <input type="range" id="fontSize" min="12" max="72" value="24" class="col-span-2">
+                            </div>
+                            <div class="form-group">
+                                <label for="text-effect">Text Effect</label>
+                                <select id="text-effect" class="form-control">
+                                    <option value="none">None</option>
+                                    <option value="outline">Outline</option>
+                                    <option value="shadow">Shadow</option>
+                                    <option value="gradient">Gradient</option>
+                                </select>
                             </div>
                         </div>
-                        
-                        <!-- Lighting -->
-                        <div>
-                            <h4 class="text-white font-medium mb-2">Lighting</h4>
-                            <div class="space-y-2">
-                                <input type="range" id="brightness" min="0" max="200" value="100" class="w-full">
-                                <input type="range" id="contrast" min="0" max="200" value="100" class="w-full">
-                                <input type="range" id="saturation" min="0" max="200" value="100" class="w-full">
-                            </div>
-                        </div>
-                        
-                        <!-- AI Suggestions -->
-                        <div class="md:col-span-2">
-                            <h4 class="text-white font-medium mb-2">AI Refinement Suggestions</h4>
-                            <div id="aiSuggestions" class="flex flex-wrap gap-2">
-                                <button onclick="applySuggestion('enhance-colors')" class="bg-blue-500/60 hover:bg-blue-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
-                                    Enhance Colors
-                                </button>
-                                <button onclick="applySuggestion('add-glow')" class="bg-purple-500/60 hover:bg-purple-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
-                                    Add Glow Effect
-                                </button>
-                                <button onclick="applySuggestion('sharpen')" class="bg-green-500/60 hover:bg-green-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
-                                    Sharpen Details
-                                </button>
-                                <button onclick="applySuggestion('vintage')" class="bg-yellow-500/60 hover:bg-yellow-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
-                                    Vintage Filter
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between mt-6">
-                        <button onclick="savePreset()" class="bg-green-500/80 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all">
-                            Save Preset
-                        </button>
-                        <button onclick="applyRefinements()" class="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg transition-all">
-                            Apply Changes
+                        <button class="btn btn-secondary" id="add-text-overlay">
+                            <i class="fas fa-plus"></i> Add Text Overlay
                         </button>
                     </div>
-                </div>
-
-                <!-- Download & Actions -->
-                <div class="glass-effect rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-white mb-4">💾 Download & Actions</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <button onclick="downloadImage('png')" class="bg-blue-500/80 hover:bg-blue-600 text-white p-3 rounded-lg transition-all">
-                            Download PNG
-                        </button>
-                        <button onclick="downloadImage('jpg')" class="bg-green-500/80 hover:bg-green-600 text-white p-3 rounded-lg transition-all">
-                            Download JPG
-                        </button>
-                        <button onclick="upscaleImage()" class="bg-purple-500/80 hover:bg-purple-600 text-white p-3 rounded-lg transition-all">
-                            Upscale 2x
-                        </button>
-                        <button onclick="saveToGallery()" class="bg-accent/80 hover:bg-accent text-white p-3 rounded-lg transition-all">
-                            Save to Gallery
-                        </button>
+                    <div class="text-overlay-preview" id="text-overlay-preview">
+                        <p>Text overlay preview will appear here</p>
                     </div>
+                    <button class="btn" id="apply-text-overlay">
+                        <i class="fas fa-check"></i> Apply Text Overlay
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Gallery Modal -->
-    <div id="galleryModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="glass-effect rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">🖼️ Your Gallery</h2>
-                <button onclick="closeGallery()" class="text-white hover:text-gray-300 text-2xl">&times;</button>
-            </div>
-            <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <!-- Gallery items will be populated here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Presets Modal -->
-    <div id="presetsModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="glass-effect rounded-xl p-6 max-w-2xl w-full">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-white">⚙️ Presets</h2>
-                <button onclick="closePresets()" class="text-white hover:text-gray-300 text-2xl">&times;</button>
-            </div>
-            <div id="presetsList" class="space-y-3">
-                <!-- Presets will be populated here -->
-            </div>
-        </div>
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <i class="fas fa-info-circle"></i>
+        <span id="notification-message">This is a notification</span>
     </div>
 
     <script>
-        // Global state
-        let uploadedFiles = [];
-        let selectedAspectRatio = '1:1';
-        let selectedStyle = { category: 'birthday', subtype: 'card' };
-        let backgroundOption = 'keep';
-        let generatedImages = [];
-        let currentImageIndex = 0;
-        let refinementHistory = [];
-        let savedPresets = JSON.parse(localStorage.getItem('aiImagePresets') || '[]');
-        let gallery = JSON.parse(localStorage.getItem('aiImageGallery') || '[]');
+        // API Configuration
+        const GEMINI_API_KEY = 'AIzaSyDNsmP0NUDk-z1Al0YQi4Xt5SSQWRVUp4s';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+        
+        // Application State
+        const state = {
+            uploadedImages: [],
+            processedImages: [],
+            currentStep: 1,
+            selectedStyle: null,
+            aspectRatio: '1:1',
+            outputType: 'standard',
+            generatedImage: null,
+            gallery: JSON.parse(localStorage.getItem('aiImageGallery')) || [],
+            refinementHistory: JSON.parse(localStorage.getItem('refinementHistory')) || {},
+            apiStatus: 'checking'
+        };
+
+        // Design Styles
+        const DESIGN_STYLES = [
+            { id: 'birthday-invitation-card', name: 'Birthday Invitation Card', icon: 'fas fa-birthday-cake' },
+            { id: 'birthday-invitation-flier', name: 'Birthday Invitation Flier', icon: 'fas fa-file-alt' },
+            { id: 'birthday-invitation-poster', name: 'Birthday Invitation Poster', icon: 'fas fa-image' },
+            { id: 'birthday-wish-card', name: 'Birthday Wish Card', icon: 'fas fa-gift' },
+            { id: 'birthday-wish-flier', name: 'Birthday Wish Flier', icon: 'fas fa-file-alt' },
+            { id: 'birthday-wish-poster', name: 'Birthday Wish Poster', icon: 'fas fa-image' },
+            { id: 'wedding-invitation-card', name: 'Wedding Invitation Card', icon: 'fas fa-ring' },
+            { id: 'wedding-invitation-flier', name: 'Wedding Invitation Flier', icon: 'fas fa-file-alt' },
+            { id: 'wedding-invitation-poster', name: 'Wedding Invitation Poster', icon: 'fas fa-image' },
+            { id: 'wedding-wish-card', name: 'Wedding Wish Card', icon: 'fas fa-heart' },
+            { id: 'wedding-wish-flier', name: 'Wedding Wish Flier', icon: 'fas fa-file-alt' },
+            { id: 'wedding-wish-poster', name: 'Wedding Wish Poster', icon: 'fas fa-image' },
+            { id: 'normal-poster-no-text', name: 'Normal Poster (No Text)', icon: 'fas fa-image' },
+            { id: 'normal-flier-no-text', name: 'Normal Flier (No Text)', icon: 'fas fa-file-alt' },
+            { id: 'normal-poster-text', name: 'Normal Poster (With Text)', icon: 'fas fa-image' },
+            { id: 'normal-flier-text', name: 'Normal Flier (With Text)', icon: 'fas fa-file-alt' },
+            { id: 'cinematic-poster', name: 'Cinematic Poster', icon: 'fas fa-film' },
+            { id: 'pinterest-image-pin', name: 'Pinterest Image Pin', icon: 'fab fa-pinterest' },
+            { id: 'pinterest-gif-pin', name: 'Pinterest GIF Pin', icon: 'fas fa-photo-video' },
+            { id: 'pinterest-text-quotes', name: 'Pinterest Text Quotes', icon: 'fas fa-quote-right' },
+            { id: 'facebook-image-post', name: 'Facebook Image Post', icon: 'fab fa-facebook' },
+            { id: 'facebook-text-quotes', name: 'Facebook Text Quotes', icon: 'fas fa-quote-right' },
+            { id: 'banner', name: 'Banner', icon: 'fas fa-flag' }
+        ];
+
+        // Refinement Suggestions
+        const REFINEMENT_SUGGESTIONS = [
+            "Change background to a beach scene with sunset",
+            "Add cinematic lighting with dramatic shadows",
+            "Remove all text and keep only the main subject",
+            "Add a professional studio background with soft lighting",
+            "Change to a minimalist design with more white space",
+            "Add a gradient background that matches the subject",
+            "Apply a vintage photo filter with subtle grain",
+            "Increase contrast and saturation for a vibrant look",
+            "Add a subtle glow effect around the main subject",
+            "Convert to black and white with high contrast",
+            "Add a soft blur to the background for depth",
+            "Apply a warm color temperature for a cozy feel",
+            "Add lens flare for a dramatic effect",
+            "Increase sharpness and clarity for crisp details",
+            "Add a subtle vignette effect to focus on the subject"
+        ];
+
+        // DOM Elements
+        const elements = {
+            workflowSteps: document.querySelectorAll('.step'),
+            stepContents: document.querySelectorAll('.step-content'),
+            uploadArea: document.getElementById('upload-area'),
+            fileInput: document.getElementById('file-input'),
+            browseBtn: document.getElementById('browse-btn'),
+            imagePreview: document.getElementById('image-preview'),
+            analyzeBtn: document.getElementById('analyze-btn'),
+            skipAnalysisBtn: document.getElementById('skip-analysis-btn'),
+            styleOptions: document.getElementById('style-options'),
+            aspectRatio: document.getElementById('aspect-ratio'),
+            outputType: document.getElementById('output-type'),
+            presetOptions: document.querySelectorAll('.preset-card'),
+            conceptPrompt: document.getElementById('concept-prompt'),
+            generateConceptBtn: document.getElementById('generate-concept-btn'),
+            backToUpload: document.getElementById('back-to-upload'),
+            generateImageBtn: document.getElementById('generate-image-btn'),
+            generatedImageContainer: document.getElementById('generated-image-container'),
+            downloadBtn: document.getElementById('download-btn'),
+            generateVariationBtn: document.getElementById('generate-variation-btn'),
+            refineBtn: document.getElementById('refine-btn'),
+            saveToGalleryBtn: document.getElementById('save-to-gallery-btn'),
+            backToConfigure: document.getElementById('back-to-configure'),
+            imageGallery: document.getElementById('image-gallery'),
+            backToGenerate: document.getElementById('back-to-generate'),
+            refinementModal: document.getElementById('refinement-modal'),
+            closeRefinementModal: document.getElementById('close-refinement-modal'),
+            refinementPrompt: document.getElementById('refinement-prompt'),
+            showSuggestionsBtn: document.getElementById('show-suggestions-btn'),
+            suggestionsDropdown: document.getElementById('suggestions-dropdown'),
+            applyAiRefinement: document.getElementById('apply-ai-refinement'),
+            applyManualRefinement: document.getElementById('apply-manual-refinement'),
+            addTextOverlay: document.getElementById('add-text-overlay'),
+            applyTextOverlay: document.getElementById('apply-text-overlay'),
+            textOverlayPreview: document.getElementById('text-overlay-preview'),
+            notification: document.getElementById('notification'),
+            notificationMessage: document.getElementById('notification-message'),
+            tabs: document.querySelectorAll('.tab'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            apiStatus: document.getElementById('api-status'),
+            apiStatusText: document.getElementById('api-status-text')
+        };
 
         // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
+        function init() {
             setupEventListeners();
-            updateStyleOptions();
+            populateStyleOptions();
             loadGallery();
-            loadPresets();
-        });
+            updateWorkflowSteps();
+            checkApiStatus();
+        }
 
+        // Check Gemini API status
+        async function checkApiStatus() {
+            try {
+                const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: "Hello"
+                            }]
+                        }]
+                    })
+                });
+                
+                if (response.ok) {
+                    state.apiStatus = 'online';
+                    elements.apiStatus.className = 'status-indicator';
+                    elements.apiStatusText.textContent = 'Gemini API: Connected';
+                } else {
+                    throw new Error('API not responding properly');
+                }
+            } catch (error) {
+                state.apiStatus = 'offline';
+                elements.apiStatus.className = 'status-indicator offline';
+                elements.apiStatusText.textContent = 'Gemini API: Offline - Using demo mode';
+                console.warn('Gemini API not available, running in demo mode:', error);
+            }
+        }
+
+        // Set up event listeners
         function setupEventListeners() {
-            const dropZone = document.getElementById('dropZone');
-            const fileInput = document.getElementById('fileInput');
-
-            // Drag and drop functionality
-            dropZone.addEventListener('click', () => fileInput.click());
-            dropZone.addEventListener('dragover', handleDragOver);
-            dropZone.addEventListener('dragleave', handleDragLeave);
-            dropZone.addEventListener('drop', handleDrop);
-            fileInput.addEventListener('change', handleFileSelect);
-
-            // Text overlay functionality
-            document.getElementById('overlayText').addEventListener('input', updateTextOverlay);
-            document.getElementById('textAlign').addEventListener('change', updateTextOverlay);
-            document.getElementById('fontSize').addEventListener('input', updateTextOverlay);
-
-            // Lighting controls
-            document.getElementById('brightness').addEventListener('input', updateLighting);
-            document.getElementById('contrast').addEventListener('input', updateLighting);
-            document.getElementById('saturation').addEventListener('input', updateLighting);
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.currentTarget.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
-            processFiles(files);
-        }
-
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files);
-            processFiles(files);
-        }
-
-        function processFiles(files) {
-            files.forEach(file => {
-                if (file.type.startsWith('image/')) {
-                    uploadedFiles.push(file);
-                    displayUploadedImage(file);
+            // Upload area events
+            elements.uploadArea.addEventListener('click', () => elements.fileInput.click());
+            elements.uploadArea.addEventListener('dragover', handleDragOver);
+            elements.uploadArea.addEventListener('drop', handleDrop);
+            elements.browseBtn.addEventListener('click', () => elements.fileInput.click());
+            elements.fileInput.addEventListener('change', handleFileSelect);
+            
+            // Analysis buttons
+            elements.analyzeBtn.addEventListener('click', analyzeImages);
+            elements.skipAnalysisBtn.addEventListener('click', skipAnalysis);
+            
+            // Style and preset selection
+            elements.aspectRatio.addEventListener('change', updateAspectRatio);
+            elements.outputType.addEventListener('change', updateOutputType);
+            elements.presetOptions.forEach(preset => {
+                preset.addEventListener('click', () => selectPreset(preset.dataset.preset));
+            });
+            
+            // Concept generation
+            elements.generateConceptBtn.addEventListener('click', generateCreativeConcepts);
+            
+            // Navigation
+            elements.backToUpload.addEventListener('click', () => navigateToStep(1));
+            elements.generateImageBtn.addEventListener('click', generateImage);
+            elements.backToConfigure.addEventListener('click', () => navigateToStep(2));
+            elements.backToGenerate.addEventListener('click', () => navigateToStep(3));
+            
+            // Image actions
+            elements.downloadBtn.addEventListener('click', downloadImage);
+            elements.generateVariationBtn.addEventListener('click', generateVariation);
+            elements.refineBtn.addEventListener('click', openRefinementModal);
+            elements.saveToGalleryBtn.addEventListener('click', saveToGallery);
+            
+            // Refinement modal
+            elements.closeRefinementModal.addEventListener('click', closeRefinementModal);
+            elements.showSuggestionsBtn.addEventListener('click', toggleSuggestions);
+            elements.applyAiRefinement.addEventListener('click', applyAiRefinement);
+            elements.applyManualRefinement.addEventListener('click', applyManualRefinement);
+            elements.addTextOverlay.addEventListener('click', addTextOverlay);
+            elements.applyTextOverlay.addEventListener('click', applyTextOverlay);
+            
+            // Tab navigation
+            elements.tabs.forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+            
+            // Manual adjustment sliders
+            setupSliders();
+            
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!elements.suggestionsDropdown.contains(e.target) && 
+                    !elements.showSuggestionsBtn.contains(e.target)) {
+                    elements.suggestionsDropdown.classList.remove('show');
                 }
             });
         }
 
-        function displayUploadedImage(file) {
-            const container = document.getElementById('uploadedImages');
-            const reader = new FileReader();
+        // Populate style options
+        function populateStyleOptions() {
+            elements.styleOptions.innerHTML = '';
             
-            reader.onload = function(e) {
-                const div = document.createElement('div');
-                div.className = 'relative group';
-                div.innerHTML = `
-                    <img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg image-preview">
-                    <button onclick="removeUploadedImage(${uploadedFiles.length - 1})" 
-                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        ×
-                    </button>
+            DESIGN_STYLES.forEach(style => {
+                const option = document.createElement('div');
+                option.className = 'option-card';
+                option.dataset.style = style.id;
+                option.innerHTML = `
+                    <i class="${style.icon}"></i>
+                    <div>${style.name}</div>
                 `;
-                container.appendChild(div);
-            };
-            
-            reader.readAsDataURL(file);
-        }
-
-        function removeUploadedImage(index) {
-            uploadedFiles.splice(index, 1);
-            const container = document.getElementById('uploadedImages');
-            container.innerHTML = '';
-            uploadedFiles.forEach(file => displayUploadedImage(file));
-        }
-
-        function selectAspectRatio(ratio) {
-            selectedAspectRatio = ratio;
-            document.querySelectorAll('.aspect-ratio-btn').forEach(btn => {
-                btn.classList.remove('bg-primary', 'bg-white/20');
-                btn.classList.add('bg-white/20');
+                option.addEventListener('click', () => selectStyle(style.id));
+                elements.styleOptions.appendChild(option);
             });
-            document.querySelector(`[data-ratio="${ratio}"]`).classList.remove('bg-white/20');
-            document.querySelector(`[data-ratio="${ratio}"]`).classList.add('bg-primary');
         }
 
-        function updateStyleOptions() {
-            const category = document.getElementById('styleCategory').value;
-            const subtypeSelect = document.getElementById('styleSubtype');
-            
-            const options = {
-                birthday: ['card', 'flier', 'poster', 'wish'],
-                wedding: ['card', 'flier', 'poster', 'wish'],
-                poster: ['with text', 'without text', 'minimal', 'detailed'],
-                cinematic: ['dramatic', 'soft', 'noir', 'vibrant'],
-                pinterest: ['image', 'gif', 'quotes', 'infographic'],
-                facebook: ['image post', 'quote post', 'story', 'cover'],
-                banner: ['web banner', 'social banner', 'promotional', 'minimalist'],
-                anime: ['manga style', 'chibi', 'realistic anime', 'studio ghibli'],
-                cyberpunk: ['neon', 'dark', 'futuristic', 'retro'],
-                steampunk: ['victorian', 'industrial', 'brass', 'mechanical'],
-                '3d': ['realistic', 'stylized', 'low poly', 'high detail'],
-                watercolor: ['soft', 'vibrant', 'abstract', 'realistic']
-            };
-
-            subtypeSelect.innerHTML = '';
-            options[category].forEach(option => {
-                const optionElement = document.createElement('option');
-                optionElement.value = option;
-                optionElement.textContent = option.charAt(0).toUpperCase() + option.slice(1);
-                subtypeSelect.appendChild(optionElement);
-            });
-
-            selectedStyle.category = category;
-            selectedStyle.subtype = options[category][0];
+        // Handle file selection
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            handleFiles(files);
         }
 
-        function setBackgroundOption(option) {
-            backgroundOption = option;
-            document.querySelectorAll('[onclick^="setBackgroundOption"]').forEach(btn => {
-                btn.classList.remove('ring-2', 'ring-white');
-            });
-            event.target.classList.add('ring-2', 'ring-white');
+        // Handle drag over
+        function handleDragOver(e) {
+            e.preventDefault();
+            elements.uploadArea.style.borderColor = 'var(--primary)';
         }
 
-        async function generateConcept() {
-            const style = selectedStyle;
-            const aspectRatio = selectedAspectRatio;
-            const topic = document.getElementById('topicInput').value;
-            
-            // Simulate AI concept generation
-            const concepts = {
-                birthday: [
-                    "A vibrant celebration scene with colorful balloons, confetti, and warm lighting creating a joyful atmosphere perfect for birthday wishes",
-                    "Elegant birthday design with golden accents, soft pastels, and dreamy bokeh effects that capture the magic of special moments",
-                    "Fun and playful birthday theme with cartoon elements, bright colors, and festive decorations that bring smiles and happiness"
-                ],
-                wedding: [
-                    "Romantic wedding scene with soft florals, elegant typography, and dreamy lighting that captures the beauty of eternal love",
-                    "Classic wedding design with vintage elements, lace patterns, and warm golden tones creating timeless elegance",
-                    "Modern wedding aesthetic with clean lines, minimalist florals, and sophisticated color palette for contemporary couples"
-                ],
-                cinematic: [
-                    "Dramatic cinematic composition with moody lighting, deep shadows, and rich colors that tell a compelling visual story",
-                    "Epic movie poster style with dynamic angles, bold typography, and atmospheric effects that capture audience attention",
-                    "Film noir inspired design with high contrast, dramatic lighting, and mysterious atmosphere for sophisticated storytelling"
-                ]
-            };
-            
-            let selectedConcepts = concepts[style.category] || concepts.birthday;
-            let concept = selectedConcepts[Math.floor(Math.random() * selectedConcepts.length)];
-            
-            if (topic) {
-                concept = `${concept} incorporating themes of ${topic} with professional studio quality and attention to detail`;
-            }
-            
-            document.getElementById('conceptPrompt').value = concept;
+        // Handle drop
+        function handleDrop(e) {
+            e.preventDefault();
+            elements.uploadArea.style.borderColor = 'var(--gray)';
+            const files = e.dataTransfer.files;
+            handleFiles(files);
         }
 
-        async function generateImage() {
-            if (uploadedFiles.length === 0) {
-                alert('Please upload at least one image first!');
-                return;
-            }
-
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            const previewArea = document.getElementById('previewArea');
+        // Handle uploaded files
+        function handleFiles(files) {
+            if (files.length === 0) return;
             
-            loadingIndicator.classList.remove('hidden');
-            previewArea.innerHTML = '';
-
-            try {
-                // Simulate API calls to Gemini and Nano Banana
-                await simulateImageGeneration();
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.type.startsWith('image/')) continue;
                 
-                // Display generated image
-                displayGeneratedImage();
-                
-            } catch (error) {
-                console.error('Generation failed:', error);
-                alert('Image generation failed. Please try again.');
-            } finally {
-                loadingIndicator.classList.add('hidden');
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageData = {
+                        id: Date.now() + i,
+                        file: file,
+                        url: e.target.result,
+                        processed: false
+                    };
+                    
+                    state.uploadedImages.push(imageData);
+                    renderImagePreview(imageData);
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            // Enable analysis buttons if we have images
+            if (state.uploadedImages.length > 0) {
+                elements.analyzeBtn.disabled = false;
+                elements.skipAnalysisBtn.disabled = false;
             }
         }
 
-        async function simulateImageGeneration() {
-            // Simulate processing time
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            
-            // Create a simulated generated image
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Set canvas size based on aspect ratio
-            const [width, height] = getCanvasDimensions(selectedAspectRatio);
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Create gradient background
-            const gradient = ctx.createLinearGradient(0, 0, width, height);
-            gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(1, '#764ba2');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
-            
-            // Add some visual elements
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-            for (let i = 0; i < 20; i++) {
-                ctx.beginPath();
-                ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 50, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            
-            // Add text
-            ctx.fillStyle = 'white';
-            ctx.font = '24px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('AI Generated Image', width / 2, height / 2);
-            ctx.font = '16px Arial';
-            ctx.fillText(`${selectedStyle.category} - ${selectedAspectRatio}`, width / 2, height / 2 + 40);
-            
-            const imageData = canvas.toDataURL('image/png');
-            generatedImages.push({
-                data: imageData,
-                timestamp: Date.now(),
-                style: selectedStyle,
-                aspectRatio: selectedAspectRatio,
-                prompt: document.getElementById('conceptPrompt').value
-            });
-        }
-
-        function getCanvasDimensions(ratio) {
-            const ratios = {
-                '9:16': [450, 800],
-                '1:1': [600, 600],
-                '16:9': [800, 450],
-                '3:4': [600, 800],
-                '4:3': [800, 600],
-                '21:9': [840, 360]
-            };
-            return ratios[ratio] || [600, 600];
-        }
-
-        function displayGeneratedImage() {
-            const previewArea = document.getElementById('previewArea');
-            const latestImage = generatedImages[generatedImages.length - 1];
-            
-            previewArea.innerHTML = `
-                <div class="relative w-full h-full flex items-center justify-center">
-                    <img src="${latestImage.data}" class="max-w-full max-h-full rounded-lg shadow-lg fade-in" id="generatedImage">
-                    <div class="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-                        ${selectedAspectRatio}
-                    </div>
-                </div>
+        // Render image preview
+        function renderImagePreview(imageData) {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'preview-item';
+            previewItem.innerHTML = `
+                <img src="${imageData.url}" alt="Preview">
+                <button class="remove-btn" data-id="${imageData.id}">&times;</button>
             `;
             
-            currentImageIndex = generatedImages.length - 1;
+            elements.imagePreview.appendChild(previewItem);
+            
+            // Add remove event
+            previewItem.querySelector('.remove-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeImage(imageData.id);
+            });
         }
 
-        function generateVariation() {
-            if (generatedImages.length === 0) {
-                alert('Generate an image first!');
+        // Remove image
+        function removeImage(id) {
+            state.uploadedImages = state.uploadedImages.filter(img => img.id !== id);
+            state.processedImages = state.processedImages.filter(img => img.id !== id);
+            
+            // Update preview
+            elements.imagePreview.innerHTML = '';
+            state.uploadedImages.forEach(renderImagePreview);
+            
+            // Disable buttons if no images
+            if (state.uploadedImages.length === 0) {
+                elements.analyzeBtn.disabled = true;
+                elements.skipAnalysisBtn.disabled = true;
+            }
+        }
+
+        // Analyze images (background removal)
+        async function analyzeImages() {
+            if (state.uploadedImages.length === 0) {
+                showNotification('Please upload at least one image', 'error');
                 return;
             }
             
-            // Create a variation of the current image
-            generateImage();
-        }
-
-        function toggleRefinementPanel() {
-            const panel = document.getElementById('refinementPanel');
-            panel.classList.toggle('open');
-        }
-
-        function updateTextOverlay() {
-            const text = document.getElementById('overlayText').value;
-            const align = document.getElementById('textAlign').value;
-            const fontSize = document.getElementById('fontSize').value;
+            showNotification('Analyzing images and removing backgrounds...', 'warning');
+            elements.analyzeBtn.innerHTML = '<div class="loading"></div> Processing...';
+            elements.analyzeBtn.disabled = true;
             
-            if (!text) return;
-            
-            const previewArea = document.getElementById('previewArea');
-            let overlay = previewArea.querySelector('.text-overlay');
-            
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'text-overlay bg-black/50 text-white p-2 rounded';
-                overlay.style.top = '50%';
-                overlay.style.left = '50%';
-                overlay.style.transform = 'translate(-50%, -50%)';
-                previewArea.appendChild(overlay);
+            try {
+                // Use Gemini API for image analysis
+                if (state.apiStatus === 'online') {
+                    for (const image of state.uploadedImages) {
+                        const analysisResult = await analyzeImageWithGemini(image);
+                        image.analysis = analysisResult;
+                        image.processed = true;
+                    }
+                    showNotification('Background removal completed!', 'success');
+                } else {
+                    // Demo mode - simulate processing
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    state.processedImages = [...state.uploadedImages];
+                    state.processedImages.forEach(img => img.processed = true);
+                    showNotification('Background removal completed! (Demo Mode)', 'success');
+                }
                 
-                // Make draggable
-                makeDraggable(overlay);
+                elements.analyzeBtn.innerHTML = '<i class="fas fa-magic"></i> Analyze & Remove Background';
+                elements.analyzeBtn.disabled = false;
+                
+                // Move to next step
+                navigateToStep(2);
+            } catch (error) {
+                showNotification('Analysis failed: ' + error.message, 'error');
+                elements.analyzeBtn.innerHTML = '<i class="fas fa-magic"></i> Analyze & Remove Background';
+                elements.analyzeBtn.disabled = false;
+            }
+        }
+
+        // Analyze image with Gemini API
+        async function analyzeImageWithGemini(image) {
+            // Convert image to base64 for Gemini API
+            const base64Image = image.url.split(',')[1];
+            
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            {
+                                text: "Analyze this image and describe the main subject. Identify if there are people, objects, or products that should be kept when removing the background."
+                            },
+                            {
+                                inline_data: {
+                                    mime_type: "image/jpeg",
+                                    data: base64Image
+                                }
+                            }
+                        ]
+                    }]
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Gemini API analysis failed');
             }
             
-            overlay.textContent = text;
-            overlay.style.textAlign = align;
-            overlay.style.fontSize = fontSize + 'px';
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
         }
 
+        // Skip analysis
+        function skipAnalysis() {
+            if (state.uploadedImages.length === 0) {
+                showNotification('Please upload at least one image', 'error');
+                return;
+            }
+            
+            state.processedImages = [...state.uploadedImages];
+            navigateToStep(2);
+        }
+
+        // Select design style
+        function selectStyle(styleId) {
+            state.selectedStyle = styleId;
+            
+            // Update UI
+            document.querySelectorAll('.option-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`.option-card[data-style="${styleId}"]`).classList.add('selected');
+        }
+
+        // Update aspect ratio
+        function updateAspectRatio() {
+            state.aspectRatio = elements.aspectRatio.value;
+        }
+
+        // Update output type
+        function updateOutputType() {
+            state.outputType = elements.outputType.value;
+        }
+
+        // Select preset
+        function selectPreset(preset) {
+            const presets = {
+                poster: { aspectRatio: '16:9', outputType: 'standard' },
+                card: { aspectRatio: '1:1', outputType: 'standard' },
+                portrait: { aspectRatio: '9:16', outputType: 'standard' },
+                banner: { aspectRatio: '21:9', outputType: 'standard' }
+            };
+            
+            if (presets[preset]) {
+                state.aspectRatio = presets[preset].aspectRatio;
+                state.outputType = presets[preset].outputType;
+                
+                // Update UI
+                elements.aspectRatio.value = state.aspectRatio;
+                elements.outputType.value = state.outputType;
+                
+                // Update preset selection
+                elements.presetOptions.forEach(p => p.classList.remove('selected'));
+                document.querySelector(`.preset-card[data-preset="${preset}"]`).classList.add('selected');
+            }
+        }
+
+        // Generate creative concepts
+        async function generateCreativeConcepts() {
+            if (!state.selectedStyle) {
+                showNotification('Please select a design style first', 'error');
+                return;
+            }
+            
+            const topic = document.getElementById('topic-input').value;
+            const style = DESIGN_STYLES.find(s => s.id === state.selectedStyle);
+            
+            showNotification('Generating creative concepts...', 'warning');
+            elements.generateConceptBtn.innerHTML = '<div class="loading"></div> Generating...';
+            elements.generateConceptBtn.disabled = true;
+            
+            try {
+                let concepts;
+                
+                if (state.apiStatus === 'online') {
+                    // Use Gemini API for concept generation
+                    concepts = await generateConceptsWithGemini(style.name, topic);
+                } else {
+                    // Demo mode - generate sample concepts
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    concepts = [
+                        `Create a ${style.name.toLowerCase()} with ${topic ? `a ${topic} theme` : 'a professional design'}. Use vibrant colors, balanced composition, and ensure the main subject is clearly highlighted.`,
+                        `Design a ${style.name.toLowerCase()} featuring ${topic ? topic : 'a creative concept'} with modern aesthetics. Incorporate subtle textures, professional typography, and a cohesive color palette.`,
+                        `Generate a ${style.name.toLowerCase()} that showcases ${topic ? topic : 'an engaging visual'} with cinematic lighting, depth of field, and high-quality details for a premium look.`
+                    ];
+                }
+                
+                elements.conceptPrompt.value = concepts[0];
+                showNotification('Creative concepts generated!', 'success');
+                elements.generateConceptBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Generate Creative Ideas';
+                elements.generateConceptBtn.disabled = false;
+            } catch (error) {
+                showNotification('Concept generation failed: ' + error.message, 'error');
+                elements.generateConceptBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Generate Creative Ideas';
+                elements.generateConceptBtn.disabled = false;
+            }
+        }
+
+        // Generate concepts with Gemini API
+        async function generateConceptsWithGemini(style, topic) {
+            const prompt = `Generate 3 creative concept prompts for a ${style}. ${topic ? `The theme is: ${topic}.` : ''} Each prompt should be detailed, around 300 characters, and describe unique high-quality professional studio design ideas. Focus on composition, color schemes, lighting, and overall aesthetic.`;
+            
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Gemini API concept generation failed');
+            }
+            
+            const data = await response.json();
+            const conceptsText = data.candidates[0].content.parts[0].text;
+            
+            // Parse the response to extract individual concepts
+            return conceptsText.split('\n').filter(line => line.trim().length > 0).slice(0, 3);
+        }
+
+        // Generate image
+        async function generateImage() {
+            if (!state.selectedStyle) {
+                showNotification('Please select a design style', 'error');
+                return;
+            }
+            
+            if (state.processedImages.length === 0 && !document.getElementById('topic-input').value) {
+                showNotification('Please upload images or enter a topic', 'error');
+                return;
+            }
+            
+            showNotification('Generating your image...', 'warning');
+            elements.generateImageBtn.innerHTML = '<div class="loading"></div> Generating...';
+            elements.generateImageBtn.disabled = true;
+            
+            try {
+                const style = DESIGN_STYLES.find(s => s.id === state.selectedStyle);
+                const aspectRatio = state.aspectRatio.replace(':', 'x');
+                const concept = elements.conceptPrompt.value;
+                
+                let imageUrl;
+                
+                if (state.apiStatus === 'online') {
+                    // Use Gemini API for image generation
+                    imageUrl = await generateImageWithGemini(style.name, concept, aspectRatio);
+                } else {
+                    // Demo mode - use placeholder image
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    const width = aspectRatio.split('x')[0] * 100;
+                    const height = aspectRatio.split('x')[1] * 100;
+                    imageUrl = `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+                }
+                
+                state.generatedImage = {
+                    id: Date.now(),
+                    url: imageUrl,
+                    style: state.selectedStyle,
+                    aspectRatio: state.aspectRatio,
+                    prompt: concept,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Display the generated image
+                elements.generatedImageContainer.innerHTML = `<img src="${state.generatedImage.url}" alt="Generated Image">`;
+                
+                showNotification('Image generated successfully!', 'success');
+                elements.generateImageBtn.innerHTML = '<i class="fas fa-bolt"></i> Generate Image';
+                elements.generateImageBtn.disabled = false;
+                
+                // Move to next step
+                navigateToStep(3);
+            } catch (error) {
+                showNotification('Image generation failed: ' + error.message, 'error');
+                elements.generateImageBtn.innerHTML = '<i class="fas fa-bolt"></i> Generate Image';
+                elements.generateImageBtn.disabled = false;
+            }
+        }
+
+        // Generate image with Gemini API
+        async function generateImageWithGemini(style, concept, aspectRatio) {
+            // Note: Gemini 2.0 Flash doesn't directly generate images
+            // In a real implementation, you would use a different Gemini model or service
+            // For now, we'll simulate this with a placeholder
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Return a placeholder image URL
+            const width = aspectRatio.split('x')[0] * 100;
+            const height = aspectRatio.split('x')[1] * 100;
+            return `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+        }
+
+        // Generate variation
+        async function generateVariation() {
+            if (!state.generatedImage) {
+                showNotification('No image to generate variation from', 'error');
+                return;
+            }
+            
+            showNotification('Generating variation...', 'warning');
+            elements.generateVariationBtn.innerHTML = '<div class="loading"></div> Generating...';
+            elements.generateVariationBtn.disabled = true;
+            
+            try {
+                const aspectRatio = state.generatedImage.aspectRatio.replace(':', 'x');
+                let imageUrl;
+                
+                if (state.apiStatus === 'online') {
+                    // Use Gemini API for variation generation
+                    imageUrl = await generateVariationWithGemini(state.generatedImage);
+                } else {
+                    // Demo mode - generate a different placeholder
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    const width = aspectRatio.split('x')[0] * 100;
+                    const height = aspectRatio.split('x')[1] * 100;
+                    imageUrl = `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+                }
+                
+                state.generatedImage = {
+                    ...state.generatedImage,
+                    id: Date.now(),
+                    url: imageUrl,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Display the generated image
+                elements.generatedImageContainer.innerHTML = `<img src="${state.generatedImage.url}" alt="Generated Image">`;
+                
+                showNotification('Variation generated successfully!', 'success');
+                elements.generateVariationBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Generate Variation';
+                elements.generateVariationBtn.disabled = false;
+            } catch (error) {
+                showNotification('Variation generation failed: ' + error.message, 'error');
+                elements.generateVariationBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Generate Variation';
+                elements.generateVariationBtn.disabled = false;
+            }
+        }
+
+        // Generate variation with Gemini API
+        async function generateVariationWithGemini(originalImage) {
+            // Simulate API call for variation
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const aspectRatio = originalImage.aspectRatio.replace(':', 'x');
+            const width = aspectRatio.split('x')[0] * 100;
+            const height = aspectRatio.split('x')[1] * 100;
+            return `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+        }
+
+        // Download image
+        function downloadImage() {
+            if (!state.generatedImage) {
+                showNotification('No image to download', 'error');
+                return;
+            }
+            
+            // Create a temporary link for download
+            const link = document.createElement('a');
+            link.href = state.generatedImage.url;
+            link.download = `ai-generated-image-${state.generatedImage.id}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Image downloaded!', 'success');
+        }
+
+        // Save to gallery
+        function saveToGallery() {
+            if (!state.generatedImage) {
+                showNotification('No image to save', 'error');
+                return;
+            }
+            
+            // Check if image already exists in gallery
+            const exists = state.gallery.some(img => img.id === state.generatedImage.id);
+            
+            if (!exists) {
+                state.gallery.push(state.generatedImage);
+                localStorage.setItem('aiImageGallery', JSON.stringify(state.gallery));
+                loadGallery();
+                showNotification('Image saved to gallery!', 'success');
+            } else {
+                showNotification('Image already in gallery', 'warning');
+            }
+        }
+
+        // Open refinement modal
+        function openRefinementModal() {
+            if (!state.generatedImage) {
+                showNotification('No image to refine', 'error');
+                return;
+            }
+            
+            elements.refinementModal.classList.add('show');
+        }
+
+        // Close refinement modal
+        function closeRefinementModal() {
+            elements.refinementModal.classList.remove('show');
+        }
+
+        // Toggle suggestions dropdown
+        function toggleSuggestions() {
+            if (elements.suggestionsDropdown.classList.contains('show')) {
+                elements.suggestionsDropdown.classList.remove('show');
+            } else {
+                // Populate suggestions
+                elements.suggestionsDropdown.innerHTML = '';
+                REFINEMENT_SUGGESTIONS.forEach(suggestion => {
+                    const item = document.createElement('div');
+                    item.className = 'suggestion-item';
+                    item.textContent = suggestion;
+                    item.addEventListener('click', () => {
+                        elements.refinementPrompt.value = suggestion;
+                        elements.suggestionsDropdown.classList.remove('show');
+                    });
+                    elements.suggestionsDropdown.appendChild(item);
+                });
+                
+                elements.suggestionsDropdown.classList.add('show');
+            }
+        }
+
+        // Apply AI refinement
+        async function applyAiRefinement() {
+            const prompt = elements.refinementPrompt.value.trim();
+            
+            if (!prompt) {
+                showNotification('Please enter refinement instructions', 'error');
+                return;
+            }
+            
+            showNotification('Applying AI refinement...', 'warning');
+            elements.applyAiRefinement.innerHTML = '<div class="loading"></div> Processing...';
+            elements.applyAiRefinement.disabled = true;
+            
+            try {
+                const aspectRatio = state.generatedImage.aspectRatio.replace(':', 'x');
+                let imageUrl;
+                
+                if (state.apiStatus === 'online') {
+                    // Use Gemini API for refinement
+                    imageUrl = await refineImageWithGemini(state.generatedImage, prompt);
+                } else {
+                    // Demo mode - generate a different placeholder
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    const width = aspectRatio.split('x')[0] * 100;
+                    const height = aspectRatio.split('x')[1] * 100;
+                    imageUrl = `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+                }
+                
+                state.generatedImage = {
+                    ...state.generatedImage,
+                    id: Date.now(),
+                    url: imageUrl,
+                    timestamp: new Date().toISOString(),
+                    refinements: [...(state.generatedImage.refinements || []), {
+                        type: 'ai',
+                        prompt: prompt,
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                
+                // Display the refined image
+                elements.generatedImageContainer.innerHTML = `<img src="${state.generatedImage.url}" alt="Refined Image">`;
+                
+                // Save refinement history
+                if (!state.refinementHistory[state.generatedImage.id]) {
+                    state.refinementHistory[state.generatedImage.id] = [];
+                }
+                state.refinementHistory[state.generatedImage.id].push({
+                    type: 'ai',
+                    prompt: prompt,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('refinementHistory', JSON.stringify(state.refinementHistory));
+                
+                showNotification('AI refinement applied successfully!', 'success');
+                elements.applyAiRefinement.innerHTML = '<i class="fas fa-magic"></i> Apply AI Refinement';
+                elements.applyAiRefinement.disabled = false;
+                closeRefinementModal();
+            } catch (error) {
+                showNotification('AI refinement failed: ' + error.message, 'error');
+                elements.applyAiRefinement.innerHTML = '<i class="fas fa-magic"></i> Apply AI Refinement';
+                elements.applyAiRefinement.disabled = false;
+            }
+        }
+
+        // Refine image with Gemini API
+        async function refineImageWithGemini(originalImage, refinementPrompt) {
+            // Simulate API call for refinement
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const aspectRatio = originalImage.aspectRatio.replace(':', 'x');
+            const width = aspectRatio.split('x')[0] * 100;
+            const height = aspectRatio.split('x')[1] * 100;
+            return `https://picsum.photos/${width}/${height}?random=${Date.now()}`;
+        }
+
+        // Apply manual refinement
+        function applyManualRefinement() {
+            const adjustments = {
+                brightness: parseInt(document.getElementById('brightness').value),
+                contrast: parseInt(document.getElementById('contrast').value),
+                saturation: parseInt(document.getElementById('saturation').value),
+                shadows: parseInt(document.getElementById('shadows').value),
+                highlights: parseInt(document.getElementById('highlights').value)
+            };
+            
+            showNotification('Applying manual adjustments...', 'warning');
+            elements.applyManualRefinement.innerHTML = '<div class="loading"></div> Processing...';
+            elements.applyManualRefinement.disabled = true;
+            
+            // Simulate processing
+            setTimeout(() => {
+                // Update the generated image with manual adjustments
+                const aspectRatio = state.generatedImage.aspectRatio.replace(':', 'x');
+                const width = aspectRatio.split('x')[0] * 100;
+                const height = aspectRatio.split('x')[1] * 100;
+                
+                state.generatedImage = {
+                    ...state.generatedImage,
+                    id: Date.now(),
+                    url: `https://picsum.photos/${width}/${height}?random=${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    adjustments: adjustments,
+                    refinements: [...(state.generatedImage.refinements || []), {
+                        type: 'manual',
+                        adjustments: adjustments,
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                
+                // Display the refined image
+                elements.generatedImageContainer.innerHTML = `<img src="${state.generatedImage.url}" alt="Refined Image">`;
+                
+                // Save refinement history
+                if (!state.refinementHistory[state.generatedImage.id]) {
+                    state.refinementHistory[state.generatedImage.id] = [];
+                }
+                state.refinementHistory[state.generatedImage.id].push({
+                    type: 'manual',
+                    adjustments: adjustments,
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('refinementHistory', JSON.stringify(state.refinementHistory));
+                
+                showNotification('Manual adjustments applied successfully!', 'success');
+                elements.applyManualRefinement.innerHTML = '<i class="fas fa-check"></i> Apply Manual Adjustments';
+                elements.applyManualRefinement.disabled = false;
+                closeRefinementModal();
+            }, 1500);
+        }
+
+        // Add text overlay
+        function addTextOverlay() {
+            const text = document.getElementById('text-content').value;
+            const color = document.getElementById('text-color').value;
+            const fontFamily = document.getElementById('font-family').value;
+            const fontSize = document.getElementById('font-size').value + 'px';
+            const textAlign = document.getElementById('text-align').value;
+            const textEffect = document.getElementById('text-effect').value;
+            
+            if (!text) {
+                showNotification('Please enter text content', 'error');
+                return;
+            }
+            
+            // Create text overlay element
+            const textOverlay = document.createElement('div');
+            textOverlay.className = 'text-overlay active';
+            textOverlay.textContent = text;
+            textOverlay.style.color = color;
+            textOverlay.style.fontFamily = fontFamily;
+            textOverlay.style.fontSize = fontSize;
+            textOverlay.style.textAlign = textAlign;
+            
+            // Apply text effects
+            if (textEffect === 'outline') {
+                textOverlay.style.textShadow = `
+                    -1px -1px 0 #000,
+                    1px -1px 0 #000,
+                    -1px 1px 0 #000,
+                    1px 1px 0 #000
+                `;
+            } else if (textEffect === 'shadow') {
+                textOverlay.style.textShadow = '2px 2px 4px rgba(0,0,0,0.5)';
+            } else if (textEffect === 'gradient') {
+                textOverlay.style.background = 'linear-gradient(45deg, #ff8a00, #e52e71)';
+                textOverlay.style.webkitBackgroundClip = 'text';
+                textOverlay.style.backgroundClip = 'text';
+                textOverlay.style.color = 'transparent';
+                textOverlay.style.padding = '5px 10px';
+            }
+            
+            // Make text overlay draggable
+            makeDraggable(textOverlay);
+            
+            // Add to preview
+            elements.textOverlayPreview.innerHTML = '';
+            elements.textOverlayPreview.appendChild(textOverlay);
+            
+            showNotification('Text overlay added. Drag to position.', 'success');
+        }
+
+        // Apply text overlay to image
+        function applyTextOverlay() {
+            if (elements.textOverlayPreview.querySelector('.text-overlay') === null) {
+                showNotification('Please add a text overlay first', 'error');
+                return;
+            }
+            
+            showNotification('Applying text overlay...', 'warning');
+            elements.applyTextOverlay.innerHTML = '<div class="loading"></div> Processing...';
+            elements.applyTextOverlay.disabled = true;
+            
+            // Simulate processing
+            setTimeout(() => {
+                // Update the generated image with text overlay
+                const aspectRatio = state.generatedImage.aspectRatio.replace(':', 'x');
+                const width = aspectRatio.split('x')[0] * 100;
+                const height = aspectRatio.split('x')[1] * 100;
+                
+                state.generatedImage = {
+                    ...state.generatedImage,
+                    id: Date.now(),
+                    url: `https://picsum.photos/${width}/${height}?random=${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    textOverlay: true,
+                    refinements: [...(state.generatedImage.refinements || []), {
+                        type: 'text',
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                
+                // Display the refined image
+                elements.generatedImageContainer.innerHTML = `<img src="${state.generatedImage.url}" alt="Image with Text Overlay">`;
+                
+                // Save refinement history
+                if (!state.refinementHistory[state.generatedImage.id]) {
+                    state.refinementHistory[state.generatedImage.id] = [];
+                }
+                state.refinementHistory[state.generatedImage.id].push({
+                    type: 'text',
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem('refinementHistory', JSON.stringify(state.refinementHistory));
+                
+                showNotification('Text overlay applied successfully!', 'success');
+                elements.applyTextOverlay.innerHTML = '<i class="fas fa-check"></i> Apply Text Overlay';
+                elements.applyTextOverlay.disabled = false;
+                closeRefinementModal();
+            }, 1500);
+        }
+
+        // Make element draggable
         function makeDraggable(element) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             
             element.onmousedown = dragMouseDown;
             
             function dragMouseDown(e) {
-                e = e || window.event;
                 e.preventDefault();
+                // Get the mouse cursor position at startup
                 pos3 = e.clientX;
                 pos4 = e.clientY;
                 document.onmouseup = closeDragElement;
@@ -693,243 +2017,162 @@
             }
             
             function elementDrag(e) {
-                e = e || window.event;
                 e.preventDefault();
+                // Calculate the new cursor position
                 pos1 = pos3 - e.clientX;
                 pos2 = pos4 - e.clientY;
                 pos3 = e.clientX;
                 pos4 = e.clientY;
+                // Set the element's new position
                 element.style.top = (element.offsetTop - pos2) + "px";
                 element.style.left = (element.offsetLeft - pos1) + "px";
-                element.style.transform = 'none';
             }
             
             function closeDragElement() {
+                // Stop moving when mouse button is released
                 document.onmouseup = null;
                 document.onmousemove = null;
             }
         }
 
-        function updateLighting() {
-            const brightness = document.getElementById('brightness').value;
-            const contrast = document.getElementById('contrast').value;
-            const saturation = document.getElementById('saturation').value;
+        // Switch tabs in refinement modal
+        function switchTab(tabId) {
+            // Update tabs
+            elements.tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
             
-            const image = document.getElementById('generatedImage');
-            if (image) {
-                image.style.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
-            }
+            // Update tab contents
+            elements.tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
         }
 
-        function applySuggestion(suggestion) {
-            const image = document.getElementById('generatedImage');
-            if (!image) return;
+        // Setup sliders for manual adjustments
+        function setupSliders() {
+            const sliders = [
+                { id: 'brightness', valueId: 'brightness-value' },
+                { id: 'contrast', valueId: 'contrast-value' },
+                { id: 'saturation', valueId: 'saturation-value' },
+                { id: 'shadows', valueId: 'shadows-value' },
+                { id: 'highlights', valueId: 'highlights-value' },
+                { id: 'font-size', valueId: 'font-size-value', suffix: 'px' }
+            ];
             
-            const effects = {
-                'enhance-colors': 'saturate(150%) contrast(110%)',
-                'add-glow': 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))',
-                'sharpen': 'contrast(120%) brightness(105%)',
-                'vintage': 'sepia(30%) contrast(90%) brightness(110%)'
-            };
-            
-            image.style.filter = effects[suggestion] || '';
+            sliders.forEach(slider => {
+                const sliderElement = document.getElementById(slider.id);
+                const valueElement = document.getElementById(slider.valueId);
+                
+                sliderElement.addEventListener('input', () => {
+                    valueElement.textContent = sliderElement.value + (slider.suffix || '');
+                });
+            });
         }
 
-        function savePreset() {
-            const name = prompt('Enter preset name:');
-            if (!name) return;
+        // Load gallery
+        function loadGallery() {
+            elements.imageGallery.innerHTML = '';
             
-            const preset = {
-                name,
-                style: selectedStyle,
-                aspectRatio: selectedAspectRatio,
-                backgroundOption,
-                brightness: document.getElementById('brightness').value,
-                contrast: document.getElementById('contrast').value,
-                saturation: document.getElementById('saturation').value,
-                timestamp: Date.now()
-            };
-            
-            savedPresets.push(preset);
-            localStorage.setItem('aiImagePresets', JSON.stringify(savedPresets));
-            loadPresets();
-            alert('Preset saved successfully!');
-        }
-
-        function applyRefinements() {
-            const refinement = {
-                brightness: document.getElementById('brightness').value,
-                contrast: document.getElementById('contrast').value,
-                saturation: document.getElementById('saturation').value,
-                textOverlay: document.getElementById('overlayText').value,
-                timestamp: Date.now()
-            };
-            
-            refinementHistory.push(refinement);
-            alert('Refinements applied!');
-        }
-
-        function downloadImage(format) {
-            if (generatedImages.length === 0) {
-                alert('No image to download!');
+            if (state.gallery.length === 0) {
+                elements.imageGallery.innerHTML = '<p>No images in gallery yet. Generate some images to see them here!</p>';
                 return;
             }
             
-            const image = generatedImages[currentImageIndex];
-            const link = document.createElement('a');
-            link.download = `ai-generated-image-${Date.now()}.${format}`;
-            link.href = image.data;
-            link.click();
+            state.gallery.forEach(image => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = 'gallery-item';
+                galleryItem.innerHTML = `
+                    <img src="${image.url}" alt="Gallery Image" class="gallery-image">
+                    <div class="gallery-info">
+                        <h3>${DESIGN_STYLES.find(s => s.id === image.style)?.name || 'Unknown Style'}</h3>
+                        <p>Aspect Ratio: ${image.aspectRatio}</p>
+                        <p>${new Date(image.timestamp).toLocaleDateString()}</p>
+                        <div class="gallery-actions">
+                            <button class="btn btn-secondary download-gallery-btn" data-id="${image.id}">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                            <button class="btn btn-warning delete-gallery-btn" data-id="${image.id}">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                elements.imageGallery.appendChild(galleryItem);
+            });
+            
+            // Add event listeners for gallery buttons
+            document.querySelectorAll('.download-gallery-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const image = state.gallery.find(img => img.id == id);
+                    if (image) {
+                        const link = document.createElement('a');
+                        link.href = image.url;
+                        link.download = `ai-gallery-image-${image.id}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showNotification('Image downloaded from gallery!', 'success');
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.delete-gallery-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    state.gallery = state.gallery.filter(img => img.id != id);
+                    localStorage.setItem('aiImageGallery', JSON.stringify(state.gallery));
+                    loadGallery();
+                    showNotification('Image deleted from gallery', 'success');
+                });
+            });
         }
 
-        function upscaleImage() {
-            if (generatedImages.length === 0) {
-                alert('No image to upscale!');
-                return;
-            }
+        // Navigate to step
+        function navigateToStep(step) {
+            state.currentStep = step;
+            updateWorkflowSteps();
             
-            // Simulate upscaling process
-            alert('Upscaling started! This may take a few moments...');
+            // Hide all step contents
+            elements.stepContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show current step content
+            document.getElementById(`step-${step}`).classList.add('active');
+        }
+
+        // Update workflow steps
+        function updateWorkflowSteps() {
+            elements.workflowSteps.forEach(step => {
+                const stepNumber = parseInt(step.dataset.step);
+                
+                step.classList.remove('active', 'completed');
+                
+                if (stepNumber === state.currentStep) {
+                    step.classList.add('active');
+                } else if (stepNumber < state.currentStep) {
+                    step.classList.add('completed');
+                }
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            elements.notification.className = `notification ${type}`;
+            elements.notificationMessage.textContent = message;
+            elements.notification.classList.add('show');
             
             setTimeout(() => {
-                alert('Image upscaled successfully! Download the enhanced version.');
-            }, 2000);
+                elements.notification.classList.remove('show');
+            }, 3000);
         }
 
-        function saveToGallery() {
-            if (generatedImages.length === 0) {
-                alert('No image to save!');
-                return;
-            }
-            
-            const image = generatedImages[currentImageIndex];
-            gallery.push({
-                ...image,
-                id: Date.now(),
-                name: `Generated ${gallery.length + 1}`
-            });
-            
-            localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
-            alert('Image saved to gallery!');
-        }
-
-        function showGallery() {
-            document.getElementById('galleryModal').classList.remove('hidden');
-            loadGallery();
-        }
-
-        function closeGallery() {
-            document.getElementById('galleryModal').classList.add('hidden');
-        }
-
-        function loadGallery() {
-            const grid = document.getElementById('galleryGrid');
-            grid.innerHTML = '';
-            
-            if (gallery.length === 0) {
-                grid.innerHTML = '<p class="text-white/50 col-span-full text-center py-8">No images in gallery yet</p>';
-                return;
-            }
-            
-            gallery.forEach((image, index) => {
-                const div = document.createElement('div');
-                div.className = 'relative group cursor-pointer';
-                div.innerHTML = `
-                    <img src="${image.data}" class="w-full h-32 object-cover rounded-lg">
-                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                        <button onclick="loadFromGallery(${index})" class="bg-white text-black px-3 py-1 rounded mr-2">Load</button>
-                        <button onclick="deleteFromGallery(${index})" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
-                    </div>
-                    <p class="text-white text-sm mt-1 truncate">${image.name}</p>
-                `;
-                grid.appendChild(div);
-            });
-        }
-
-        function loadFromGallery(index) {
-            const image = gallery[index];
-            generatedImages.push(image);
-            currentImageIndex = generatedImages.length - 1;
-            displayGeneratedImage();
-            closeGallery();
-        }
-
-        function deleteFromGallery(index) {
-            if (confirm('Delete this image from gallery?')) {
-                gallery.splice(index, 1);
-                localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
-                loadGallery();
-            }
-        }
-
-        function showPresets() {
-            document.getElementById('presetsModal').classList.remove('hidden');
-            loadPresets();
-        }
-
-        function closePresets() {
-            document.getElementById('presetsModal').classList.add('hidden');
-        }
-
-        function loadPresets() {
-            const list = document.getElementById('presetsList');
-            list.innerHTML = '';
-            
-            if (savedPresets.length === 0) {
-                list.innerHTML = '<p class="text-white/50 text-center py-4">No presets saved yet</p>';
-                return;
-            }
-            
-            savedPresets.forEach((preset, index) => {
-                const div = document.createElement('div');
-                div.className = 'bg-white/10 rounded-lg p-4 flex justify-between items-center';
-                div.innerHTML = `
-                    <div>
-                        <h4 class="text-white font-medium">${preset.name}</h4>
-                        <p class="text-white/70 text-sm">${preset.style.category} - ${preset.aspectRatio}</p>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="applyPreset(${index})" class="bg-primary hover:bg-primary/80 text-white px-3 py-1 rounded">Apply</button>
-                        <button onclick="deletePreset(${index})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Delete</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function applyPreset(index) {
-            const preset = savedPresets[index];
-            
-            // Apply preset settings
-            selectedStyle = preset.style;
-            selectedAspectRatio = preset.aspectRatio;
-            backgroundOption = preset.backgroundOption;
-            
-            // Update UI
-            document.getElementById('styleCategory').value = preset.style.category;
-            updateStyleOptions();
-            document.getElementById('styleSubtype').value = preset.style.subtype;
-            selectAspectRatio(preset.aspectRatio);
-            
-            // Apply lighting settings
-            document.getElementById('brightness').value = preset.brightness;
-            document.getElementById('contrast').value = preset.contrast;
-            document.getElementById('saturation').value = preset.saturation;
-            
-            closePresets();
-            alert('Preset applied successfully!');
-        }
-
-        function deletePreset(index) {
-            if (confirm('Delete this preset?')) {
-                savedPresets.splice(index, 1);
-                localStorage.setItem('aiImagePresets', JSON.stringify(savedPresets));
-                loadPresets();
-            }
-        }
-
-        // Initialize default aspect ratio selection
-        selectAspectRatio('1:1');
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98873a17d50426f7',t:'MTc1OTQzOTg1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
