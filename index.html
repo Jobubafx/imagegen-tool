@@ -3,61 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Image Generator Pro - Nano Banana + Gemini</title>
+    <title>AI Image Generator - Create Stunning Visuals</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        accent: '#06b6d4'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             box-sizing: border-box;
         }
         
         .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         
         .glass-effect {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
+        .drag-over {
+            border-color: #06b6d4 !important;
+            background-color: rgba(6, 182, 212, 0.1) !important;
+        }
+        
+        .image-preview {
+            transition: all 0.3s ease;
+        }
+        
+        .image-preview:hover {
+            transform: scale(1.05);
+        }
+        
         .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
             animation: spin 1s linear infinite;
         }
         
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .drag-drop-zone {
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            transition: all 0.3s ease;
-        }
-        
-        .drag-drop-zone.drag-over {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-        
-        .image-preview {
-            max-width: 150px;
-            max-height: 150px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-        
-        .gallery-item {
-            transition: transform 0.3s ease;
-        }
-        
-        .gallery-item:hover {
-            transform: scale(1.05);
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
         
         .fade-in {
@@ -69,1088 +64,675 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        .step-indicator {
-            position: relative;
-        }
-        
-        .step-indicator::after {
-            content: '';
+        .text-overlay {
             position: absolute;
-            top: 50%;
-            right: -20px;
-            width: 0;
-            height: 0;
-            border-left: 10px solid rgba(255, 255, 255, 0.3);
-            border-top: 10px solid transparent;
-            border-bottom: 10px solid transparent;
-        }
-        
-        .step-indicator.active {
-            background: rgba(102, 126, 234, 0.3);
+            cursor: move;
+            user-select: none;
+            resize: both;
+            overflow: hidden;
+            min-width: 50px;
+            min-height: 20px;
         }
         
         .refinement-panel {
-            max-height: 600px;
-            overflow-y: auto;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
         }
         
-        .text-overlay-controls {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-        }
-        
-        .canvas-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .transparency-bg {
-            background-image: 
-                linear-gradient(45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-                linear-gradient(45deg, transparent 75%, #ccc 75%), 
-                linear-gradient(-45deg, transparent 75%, #ccc 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        .refinement-panel.open {
+            max-height: 500px;
         }
     </style>
 </head>
-<body class="gradient-bg min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4">AI Image Generator Pro</h1>
-            <p class="text-xl text-white opacity-90">Powered by Nano Banana + Gemini 2.5 Pro</p>
-            <div class="mt-4 flex justify-center space-x-4 text-sm text-white/70">
-                <span>🎨 Professional Studio Quality</span>
-                <span>🚀 Advanced AI Models</span>
-                <span>⚡ Real-time Processing</span>
-            </div>
-        </header>
-
-        <!-- Step Indicator -->
-        <div class="max-w-4xl mx-auto mb-8">
-            <div class="flex justify-between items-center">
-                <div id="step1" class="step-indicator active glass-effect rounded-lg px-4 py-2 text-white font-semibold">
-                    1. Upload & Style
-                </div>
-                <div id="step2" class="step-indicator glass-effect rounded-lg px-4 py-2 text-white font-semibold">
-                    2. Generate Concept
-                </div>
-                <div id="step3" class="step-indicator glass-effect rounded-lg px-4 py-2 text-white font-semibold">
-                    3. Create Image
-                </div>
-                <div id="step4" class="step-indicator glass-effect rounded-lg px-4 py-2 text-white font-semibold">
-                    4. Refine & Export
-                </div>
+<body class="min-h-screen gradient-bg">
+    <!-- Header -->
+    <header class="glass-effect p-4 mb-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-white">AI Image Generator</h1>
+            <div class="flex space-x-4">
+                <button onclick="showGallery()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
+                    Gallery
+                </button>
+                <button onclick="showPresets()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
+                    Presets
+                </button>
             </div>
         </div>
+    </header>
 
-        <!-- Main Interface -->
-        <div class="max-w-7xl mx-auto">
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                <!-- Left Panel - Controls -->
-                <div class="xl:col-span-2 space-y-6">
-                    <!-- Upload Section -->
-                    <div class="glass-effect rounded-2xl p-6">
-                        <h2 class="text-2xl font-bold text-white mb-6">📁 Upload Reference Images</h2>
-                        
-                        <div id="dropZone" class="drag-drop-zone rounded-lg p-8 text-center cursor-pointer">
-                            <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
-                            <div class="text-white">
-                                <div class="text-4xl mb-4">📸</div>
-                                <p class="text-lg font-semibold mb-2">Drag & drop images here</p>
-                                <p class="text-sm opacity-70">or click to browse</p>
-                                <p class="text-xs opacity-50 mt-2">Supports JPG, PNG, WebP • Max 10MB each</p>
-                            </div>
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 pb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Panel - Controls -->
+            <div class="lg:col-span-1 space-y-6">
+                
+                <!-- Step 1: Upload Images -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">📸 Step 1: Upload Images</h2>
+                    
+                    <div id="dropZone" class="border-2 border-dashed border-white/30 rounded-lg p-8 text-center cursor-pointer hover:border-accent transition-all">
+                        <div class="text-white/70 mb-4">
+                            <svg class="mx-auto h-12 w-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p>Drag & drop images here or click to browse</p>
+                            <p class="text-sm">Supports JPG, PNG, WebP</p>
                         </div>
-                        
-                        <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                        <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
                     </div>
+                    
+                    <div id="uploadedImages" class="mt-4 grid grid-cols-2 gap-2"></div>
+                </div>
 
-                    <!-- Style & Settings -->
-                    <div class="glass-effect rounded-2xl p-6">
-                        <h2 class="text-2xl font-bold text-white mb-6">🎨 Style & Configuration</h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Style Selection -->
-                            <div>
-                                <label class="block text-white font-semibold mb-3">Design Style</label>
-                                <select id="styleSelect" class="w-full bg-white/20 text-white rounded-lg px-4 py-3 border border-white/30">
-                                    <optgroup label="Birthday Designs">
-                                        <option value="birthday-invitation-card">Birthday Invitation Card</option>
-                                        <option value="birthday-invitation-flier">Birthday Invitation Flier</option>
-                                        <option value="birthday-invitation-poster">Birthday Invitation Poster</option>
-                                        <option value="birthday-wish-card">Birthday Wish Card</option>
-                                        <option value="birthday-wish-flier">Birthday Wish Flier</option>
-                                        <option value="birthday-wish-poster">Birthday Wish Poster</option>
-                                    </optgroup>
-                                    <optgroup label="Wedding Designs">
-                                        <option value="wedding-invitation-card">Wedding Invitation Card</option>
-                                        <option value="wedding-invitation-flier">Wedding Invitation Flier</option>
-                                        <option value="wedding-invitation-poster">Wedding Invitation Poster</option>
-                                        <option value="wedding-wish-card">Wedding Wish Card</option>
-                                        <option value="wedding-wish-flier">Wedding Wish Flier</option>
-                                        <option value="wedding-wish-poster">Wedding Wish Poster</option>
-                                    </optgroup>
-                                    <optgroup label="General Designs">
-                                        <option value="normal-poster-no-text">Poster (No Text)</option>
-                                        <option value="normal-flier-no-text">Flier (No Text)</option>
-                                        <option value="normal-poster-with-text">Poster (With Text)</option>
-                                        <option value="normal-flier-with-text">Flier (With Text)</option>
-                                        <option value="cinematic-poster">Cinematic Poster</option>
-                                        <option value="banner">Professional Banner</option>
-                                    </optgroup>
-                                    <optgroup label="Social Media">
-                                        <option value="pinterest-image">Pinterest Image Pin</option>
-                                        <option value="pinterest-gif">Pinterest GIF Pin</option>
-                                        <option value="pinterest-quotes">Pinterest Text Quotes</option>
-                                        <option value="facebook-image">Facebook Image Post</option>
-                                        <option value="facebook-quotes">Facebook Text Quotes</option>
-                                    </optgroup>
-                                    <optgroup label="Artistic Styles">
-                                        <option value="anime">Anime Style</option>
-                                        <option value="cyberpunk">Cyberpunk</option>
-                                        <option value="steampunk">Steampunk</option>
-                                        <option value="3d-render">3D Render</option>
-                                        <option value="2d-illustration">2D Illustration</option>
-                                        <option value="watercolor">Watercolor Art</option>
-                                    </optgroup>
-                                </select>
-                            </div>
-
-                            <!-- Aspect Ratio -->
-                            <div>
-                                <label class="block text-white font-semibold mb-3">Aspect Ratio</label>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <button class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded-lg transition-colors text-sm" data-ratio="9:16">9:16<br><span class="text-xs opacity-70">Portrait</span></button>
-                                    <button class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded-lg transition-colors text-sm" data-ratio="1:1">1:1<br><span class="text-xs opacity-70">Square</span></button>
-                                    <button class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded-lg transition-colors text-sm" data-ratio="16:9">16:9<br><span class="text-xs opacity-70">Landscape</span></button>
-                                    <button class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded-lg transition-colors text-sm" data-ratio="3:4">3:4<br><span class="text-xs opacity-70">Photo</span></button>
-                                    <button class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded-lg transition-colors text-sm" data-ratio="4:3">4:3<br><span class="text-xs opacity-70">Classic</span></button>
-                                    <button class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded-lg transition-colors text-sm" data-ratio="21:9">21:9<br><span class="text-xs opacity-70">Banner</span></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Topic Input -->
-                        <div class="mt-6">
-                            <label class="block text-white font-semibold mb-3">Topic / Theme (Optional)</label>
-                            <input type="text" id="topicInput" placeholder="e.g., 'Tropical paradise birthday party' or 'Elegant winter wedding'" 
-                                   class="w-full bg-white/20 text-white placeholder-white/70 rounded-lg px-4 py-3 border border-white/30">
-                        </div>
-                    </div>
-
-                    <!-- Background Removal & Generation -->
-                    <div class="glass-effect rounded-2xl p-6">
-                        <h2 class="text-2xl font-bold text-white mb-6">🔍 AI Processing Options</h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <button id="analyzeRemoveBgBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-4 px-6 rounded-lg font-semibold transition-colors">
-                                🎭 Analyze & Remove Background
-                                <div class="text-sm opacity-80 mt-1">Detect person/object, remove BG</div>
-                            </button>
-                            
-                            <button id="generateDirectBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-lg font-semibold transition-colors">
-                                🚀 Generate Without Analysis
-                                <div class="text-sm opacity-80 mt-1">Use original images as-is</div>
-                            </button>
-                        </div>
-
-                        <!-- Post-Analysis Options -->
-                        <div id="postAnalysisOptions" class="hidden mt-6 space-y-4">
-                            <div class="bg-white/10 rounded-lg p-4">
-                                <h3 class="text-white font-semibold mb-3">✨ Concept Generation</h3>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <button id="generateConceptBtn" class="bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg transition-colors">
-                                        💡 Auto-Generate Concept
-                                    </button>
-                                    <button id="generateDirectlyBtn" class="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg transition-colors">
-                                        ⚡ Generate Directly
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Creative Concept Editor -->
-                    <div id="conceptEditor" class="hidden glass-effect rounded-2xl p-6">
-                        <h2 class="text-2xl font-bold text-white mb-6">💭 Creative Concept</h2>
-                        
-                        <div class="space-y-4">
-                            <textarea id="conceptText" rows="6" 
-                                      class="w-full bg-white/20 text-white placeholder-white/70 rounded-lg px-4 py-3 border border-white/30"
-                                      placeholder="AI-generated concept will appear here, or write your own..."></textarea>
-                            
-                            <div class="flex gap-3">
-                                <button id="regenerateConceptBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-lg transition-colors">
-                                    🔄 Regenerate Concept
-                                </button>
-                                <button id="generateFromConceptBtn" class="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors">
-                                    🎨 Generate Image from Concept
-                                </button>
-                            </div>
-                        </div>
+                <!-- Step 2: Aspect Ratio -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">📐 Step 2: Aspect Ratio</h2>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectAspectRatio('9:16')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="9:16">
+                            Portrait 9:16
+                        </button>
+                        <button onclick="selectAspectRatio('1:1')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="1:1">
+                            Square 1:1
+                        </button>
+                        <button onclick="selectAspectRatio('16:9')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="16:9">
+                            Landscape 16:9
+                        </button>
+                        <button onclick="selectAspectRatio('3:4')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="3:4">
+                            Photo 3:4
+                        </button>
+                        <button onclick="selectAspectRatio('4:3')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="4:3">
+                            Classic 4:3
+                        </button>
+                        <button onclick="selectAspectRatio('21:9')" class="aspect-ratio-btn bg-white/20 hover:bg-white/30 text-white p-3 rounded-lg transition-all" data-ratio="21:9">
+                            Banner 21:9
+                        </button>
                     </div>
                 </div>
 
-                <!-- Right Panel - Preview & Gallery -->
-                <div class="space-y-6">
-                    <!-- Generation Status -->
-                    <div id="generationStatus" class="hidden glass-effect rounded-2xl p-6">
-                        <div class="flex items-center justify-center">
-                            <div class="loading-spinner mr-3"></div>
-                            <div class="text-white">
-                                <div id="statusText" class="font-semibold">Processing...</div>
-                                <div id="statusDetail" class="text-sm opacity-70">Please wait</div>
-                            </div>
-                        </div>
-                        <div class="mt-4 bg-white/20 rounded-full h-2">
-                            <div id="progressBar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                <!-- Step 3: Style Selection -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">🎨 Step 3: Style</h2>
+                    <div class="space-y-2">
+                        <select id="styleCategory" onchange="updateStyleOptions()" class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30">
+                            <option value="birthday">🎂 Birthday</option>
+                            <option value="wedding">💒 Wedding</option>
+                            <option value="poster">📋 Poster/Flier</option>
+                            <option value="cinematic">🎬 Cinematic</option>
+                            <option value="pinterest">📌 Pinterest</option>
+                            <option value="facebook">📘 Facebook Post</option>
+                            <option value="banner">🏷️ Banner</option>
+                            <option value="anime">🎌 Anime</option>
+                            <option value="cyberpunk">🤖 Cyberpunk</option>
+                            <option value="steampunk">⚙️ Steampunk</option>
+                            <option value="3d">🎯 3D Render</option>
+                            <option value="watercolor">🎨 Watercolor</option>
+                        </select>
+                        
+                        <select id="styleSubtype" class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30">
+                            <option value="card">Card</option>
+                            <option value="flier">Flier</option>
+                            <option value="poster">Poster</option>
+                            <option value="wish">Wish</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Step 4: Background Options -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">🖼️ Step 4: Background</h2>
+                    <div class="space-y-3">
+                        <button onclick="setBackgroundOption('remove')" class="bg-red-500/80 hover:bg-red-600 text-white w-full p-3 rounded-lg transition-all">
+                            Remove Background
+                        </button>
+                        <button onclick="setBackgroundOption('keep')" class="bg-green-500/80 hover:bg-green-600 text-white w-full p-3 rounded-lg transition-all">
+                            Keep Original Background
+                        </button>
+                        <button onclick="setBackgroundOption('generate')" class="bg-blue-500/80 hover:bg-blue-600 text-white w-full p-3 rounded-lg transition-all">
+                            Generate New Background
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Concept Generation -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h2 class="text-xl font-semibold text-white mb-4">💡 Step 5: Concept</h2>
+                    <div class="space-y-3">
+                        <button onclick="generateConcept()" class="bg-purple-500/80 hover:bg-purple-600 text-white w-full p-3 rounded-lg transition-all">
+                            Auto-Generate Creative Prompt
+                        </button>
+                        <textarea id="conceptPrompt" placeholder="Or write your own concept/prompt..." class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30 h-24 resize-none placeholder-white/50"></textarea>
+                        <input type="text" id="topicInput" placeholder="Topic for prompt generation..." class="w-full bg-white/20 text-white rounded-lg p-3 border border-white/30 placeholder-white/50">
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button onclick="generateImage()" class="w-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 text-white font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg">
+                    ✨ Generate Image
+                </button>
+            </div>
+
+            <!-- Center Panel - Preview & Results -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Preview Area -->
+                <div class="glass-effect rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-white">🖼️ Preview & Results</h2>
+                        <div class="flex space-x-2">
+                            <button onclick="toggleRefinementPanel()" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all">
+                                Refine
+                            </button>
+                            <button onclick="generateVariation()" class="bg-accent/80 hover:bg-accent text-white px-4 py-2 rounded-lg transition-all">
+                                Variation
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Generated Image Preview -->
-                    <div id="imageResult" class="hidden glass-effect rounded-2xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">🖼️ Generated Image</h3>
-                        
-                        <div class="canvas-container transparency-bg rounded-lg p-4 mb-4">
-                            <canvas id="previewCanvas" class="max-w-full h-auto rounded-lg shadow-lg"></canvas>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <button id="generateVariationBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition-colors">
-                                🎲 Generate Variation
-                            </button>
-                            <button id="upscaleBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white py-2 px-4 rounded-lg transition-colors">
-                                📈 Upscale (2x)
-                            </button>
-                        </div>
-                        
-                        <div class="grid grid-cols-3 gap-2">
-                            <button id="saveToGalleryBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded-lg transition-colors text-sm">
-                                💾 Save
-                            </button>
-                            <button id="refineBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded-lg transition-colors text-sm">
-                                ✨ Refine
-                            </button>
-                            <button id="downloadBtn" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg transition-colors text-sm">
-                                ⬇️ Download
-                            </button>
+                    
+                    <div id="previewArea" class="relative bg-white/10 rounded-lg min-h-96 flex items-center justify-center">
+                        <div class="text-white/50 text-center">
+                            <svg class="mx-auto h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p>Generated images will appear here</p>
                         </div>
                     </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="loadingIndicator" class="hidden text-center py-8">
+                        <div class="loading-spinner mx-auto h-8 w-8 border-4 border-white/30 border-t-white rounded-full"></div>
+                        <p class="text-white mt-4">Generating your image...</p>
+                    </div>
+                </div>
 
-                    <!-- Refinement Panel -->
-                    <div id="refinementPanel" class="hidden glass-effect rounded-2xl p-6">
-                        <h3 class="text-xl font-bold text-white mb-4">🎨 Refinement Tools</h3>
-                        
-                        <div class="refinement-panel space-y-4">
-                            <!-- AI Suggestions -->
-                            <div>
-                                <label class="block text-white font-semibold mb-2">AI Suggestions</label>
-                                <select id="aiSuggestions" class="w-full bg-white/20 text-white rounded-lg px-3 py-2 border border-white/30 text-sm">
-                                    <option value="">Select a suggestion...</option>
-                                    <option value="enhance-lighting">Enhance Lighting</option>
-                                    <option value="improve-colors">Improve Colors</option>
-                                    <option value="add-depth">Add Depth & Shadows</option>
-                                    <option value="sharpen-details">Sharpen Details</option>
-                                    <option value="artistic-filter">Apply Artistic Filter</option>
+                <!-- Refinement Panel -->
+                <div id="refinementPanel" class="refinement-panel glass-effect rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">🎛️ Refinement Tools</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Text Overlay -->
+                        <div>
+                            <h4 class="text-white font-medium mb-2">Text Overlay</h4>
+                            <input type="text" id="overlayText" placeholder="Enter text..." class="w-full bg-white/20 text-white rounded-lg p-2 border border-white/30 placeholder-white/50 mb-2">
+                            <div class="grid grid-cols-3 gap-2">
+                                <select id="textAlign" class="bg-white/20 text-white rounded p-2 border border-white/30">
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
                                 </select>
+                                <input type="range" id="fontSize" min="12" max="72" value="24" class="col-span-2">
                             </div>
-
-                            <!-- Background Controls -->
-                            <div>
-                                <label class="block text-white font-semibold mb-2">Background</label>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button class="bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded text-sm transition-colors" onclick="adjustBackground('blur')">
-                                        Blur BG
-                                    </button>
-                                    <button class="bg-white/20 hover:bg-white/30 text-white py-2 px-3 rounded text-sm transition-colors" onclick="adjustBackground('remove')">
-                                        Remove BG
-                                    </button>
-                                </div>
+                        </div>
+                        
+                        <!-- Lighting -->
+                        <div>
+                            <h4 class="text-white font-medium mb-2">Lighting</h4>
+                            <div class="space-y-2">
+                                <input type="range" id="brightness" min="0" max="200" value="100" class="w-full">
+                                <input type="range" id="contrast" min="0" max="200" value="100" class="w-full">
+                                <input type="range" id="saturation" min="0" max="200" value="100" class="w-full">
                             </div>
-
-                            <!-- Lighting Controls -->
-                            <div>
-                                <label class="block text-white font-semibold mb-2">Lighting</label>
-                                <div class="space-y-2">
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-white text-sm w-20">Brightness</span>
-                                        <input type="range" id="brightnessSlider" min="-50" max="50" value="0" class="flex-1">
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <span class="text-white text-sm w-20">Contrast</span>
-                                        <input type="range" id="contrastSlider" min="-50" max="50" value="0" class="flex-1">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Text Overlay -->
-                            <div>
-                                <label class="block text-white font-semibold mb-2">Text Overlay</label>
-                                <input type="text" id="textOverlay" placeholder="Add text..." 
-                                       class="w-full bg-white/20 text-white placeholder-white/70 rounded px-3 py-2 border border-white/30 text-sm mb-2">
-                                <div class="grid grid-cols-3 gap-2">
-                                    <select id="textAlign" class="bg-white/20 text-white rounded px-2 py-1 text-sm">
-                                        <option value="left">Left</option>
-                                        <option value="center">Center</option>
-                                        <option value="right">Right</option>
-                                    </select>
-                                    <input type="color" id="textColor" value="#ffffff" class="bg-white/20 rounded px-2 py-1">
-                                    <input type="range" id="textSize" min="12" max="72" value="24" class="bg-white/20 rounded">
-                                </div>
-                            </div>
-
-                            <!-- Preset Management -->
-                            <div>
-                                <label class="block text-white font-semibold mb-2">Presets</label>
-                                <div class="flex gap-2">
-                                    <select id="presetSelect" class="flex-1 bg-white/20 text-white rounded px-3 py-2 text-sm">
-                                        <option value="">Load preset...</option>
-                                    </select>
-                                    <button id="savePresetBtn" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm transition-colors">
-                                        Save
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Apply Refinements -->
-                            <div class="pt-4 border-t border-white/20">
-                                <button id="applyRefinementsBtn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors">
-                                    ✨ Apply Refinements
+                        </div>
+                        
+                        <!-- AI Suggestions -->
+                        <div class="md:col-span-2">
+                            <h4 class="text-white font-medium mb-2">AI Refinement Suggestions</h4>
+                            <div id="aiSuggestions" class="flex flex-wrap gap-2">
+                                <button onclick="applySuggestion('enhance-colors')" class="bg-blue-500/60 hover:bg-blue-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
+                                    Enhance Colors
+                                </button>
+                                <button onclick="applySuggestion('add-glow')" class="bg-purple-500/60 hover:bg-purple-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
+                                    Add Glow Effect
+                                </button>
+                                <button onclick="applySuggestion('sharpen')" class="bg-green-500/60 hover:bg-green-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
+                                    Sharpen Details
+                                </button>
+                                <button onclick="applySuggestion('vintage')" class="bg-yellow-500/60 hover:bg-yellow-500/80 text-white px-3 py-1 rounded-full text-sm transition-all">
+                                    Vintage Filter
                                 </button>
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="flex justify-between mt-6">
+                        <button onclick="savePreset()" class="bg-green-500/80 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all">
+                            Save Preset
+                        </button>
+                        <button onclick="applyRefinements()" class="bg-primary hover:bg-primary/80 text-white px-6 py-2 rounded-lg transition-all">
+                            Apply Changes
+                        </button>
+                    </div>
+                </div>
 
-                    <!-- Gallery -->
-                    <div class="glass-effect rounded-2xl p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-xl font-bold text-white">🖼️ Your Gallery</h3>
-                            <div class="flex gap-2">
-                                <button id="batchDownloadBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition-colors">
-                                    📦 Batch Download
-                                </button>
-                                <button id="clearGalleryBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition-colors">
-                                    🗑️ Clear
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div id="gallery" class="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-                            <!-- Gallery items will be added here -->
-                        </div>
+                <!-- Download & Actions -->
+                <div class="glass-effect rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">💾 Download & Actions</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button onclick="downloadImage('png')" class="bg-blue-500/80 hover:bg-blue-600 text-white p-3 rounded-lg transition-all">
+                            Download PNG
+                        </button>
+                        <button onclick="downloadImage('jpg')" class="bg-green-500/80 hover:bg-green-600 text-white p-3 rounded-lg transition-all">
+                            Download JPG
+                        </button>
+                        <button onclick="upscaleImage()" class="bg-purple-500/80 hover:bg-purple-600 text-white p-3 rounded-lg transition-all">
+                            Upscale 2x
+                        </button>
+                        <button onclick="saveToGallery()" class="bg-accent/80 hover:bg-accent text-white p-3 rounded-lg transition-all">
+                            Save to Gallery
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Gallery Modal -->
+    <div id="galleryModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-effect rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">🖼️ Your Gallery</h2>
+                <button onclick="closeGallery()" class="text-white hover:text-gray-300 text-2xl">&times;</button>
+            </div>
+            <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Gallery items will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Presets Modal -->
+    <div id="presetsModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="glass-effect rounded-xl p-6 max-w-2xl w-full">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">⚙️ Presets</h2>
+                <button onclick="closePresets()" class="text-white hover:text-gray-300 text-2xl">&times;</button>
+            </div>
+            <div id="presetsList" class="space-y-3">
+                <!-- Presets will be populated here -->
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Configuration - API key will be loaded from environment
-        let API_KEY = '';
-        const API_BASE_URL = 'https://openrouter.ai/api/v1';
-        
-        // Load API key from environment (Vercel will inject this)
-        async function loadApiKey() {
-            try {
-                const response = await fetch('/api/config');
-                const config = await response.json();
-                API_KEY = config.apiKey;
-            } catch (error) {
-                console.error('Failed to load API key:', error);
-                // Fallback for development
-                API_KEY = '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';
-            }
-        }
-        
-        // State management
-        let uploadedImages = [];
-        let selectedRatio = '1:1';
-        let gallery = JSON.parse(localStorage.getItem('aiImageGallery') || '[]');
-        let currentStep = 1;
-        let isAnalyzed = false;
-        let currentImage = null;
+        // Global state
+        let uploadedFiles = [];
+        let selectedAspectRatio = '1:1';
+        let selectedStyle = { category: 'birthday', subtype: 'card' };
+        let backgroundOption = 'keep';
+        let generatedImages = [];
+        let currentImageIndex = 0;
         let refinementHistory = [];
-        let presets = JSON.parse(localStorage.getItem('refinementPresets') || '{}');
-        let fabricCanvas = null;
+        let savedPresets = JSON.parse(localStorage.getItem('aiImagePresets') || '[]');
+        let gallery = JSON.parse(localStorage.getItem('aiImageGallery') || '[]');
 
-        // DOM elements
-        const dropZone = document.getElementById('dropZone');
-        const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('imagePreview');
-        const styleSelect = document.getElementById('styleSelect');
-        const topicInput = document.getElementById('topicInput');
-        const analyzeRemoveBgBtn = document.getElementById('analyzeRemoveBgBtn');
-        const generateDirectBtn = document.getElementById('generateDirectBtn');
-        const postAnalysisOptions = document.getElementById('postAnalysisOptions');
-        const generateConceptBtn = document.getElementById('generateConceptBtn');
-        const generateDirectlyBtn = document.getElementById('generateDirectlyBtn');
-        const conceptEditor = document.getElementById('conceptEditor');
-        const conceptText = document.getElementById('conceptText');
-        const regenerateConceptBtn = document.getElementById('regenerateConceptBtn');
-        const generateFromConceptBtn = document.getElementById('generateFromConceptBtn');
-        const generationStatus = document.getElementById('generationStatus');
-        const statusText = document.getElementById('statusText');
-        const statusDetail = document.getElementById('statusDetail');
-        const progressBar = document.getElementById('progressBar');
-        const imageResult = document.getElementById('imageResult');
-        const previewCanvas = document.getElementById('previewCanvas');
-        const generateVariationBtn = document.getElementById('generateVariationBtn');
-        const upscaleBtn = document.getElementById('upscaleBtn');
-        const saveToGalleryBtn = document.getElementById('saveToGalleryBtn');
-        const refineBtn = document.getElementById('refineBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const refinementPanel = document.getElementById('refinementPanel');
-        const galleryContainer = document.getElementById('gallery');
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadApiKey();
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
-            setupDragDrop();
-            setupCanvas();
-            renderGallery();
+            updateStyleOptions();
+            loadGallery();
             loadPresets();
-            console.log('AI Image Generator Pro initialized');
         });
 
         function setupEventListeners() {
-            // File input
-            imageInput.addEventListener('change', handleImageUpload);
-            
-            // Main action buttons
-            analyzeRemoveBgBtn.addEventListener('click', analyzeAndRemoveBackground);
-            generateDirectBtn.addEventListener('click', () => generateImage(false, false));
-            generateConceptBtn.addEventListener('click', generateConcept);
-            generateDirectlyBtn.addEventListener('click', () => generateImage(true, false));
-            regenerateConceptBtn.addEventListener('click', generateConcept);
-            generateFromConceptBtn.addEventListener('click', () => generateImage(true, true));
-            
-            // Result actions
-            generateVariationBtn.addEventListener('click', generateVariation);
-            upscaleBtn.addEventListener('click', upscaleImage);
-            saveToGalleryBtn.addEventListener('click', saveToGallery);
-            refineBtn.addEventListener('click', showRefinementPanel);
-            downloadBtn.addEventListener('click', downloadImage);
-            
-            // Refinement controls
-            document.getElementById('applyRefinementsBtn').addEventListener('click', applyRefinements);
-            document.getElementById('savePresetBtn').addEventListener('click', savePreset);
-            document.getElementById('presetSelect').addEventListener('change', loadPreset);
-            document.getElementById('aiSuggestions').addEventListener('change', applySuggestion);
-            
-            // Gallery actions
-            document.getElementById('batchDownloadBtn').addEventListener('click', batchDownload);
-            document.getElementById('clearGalleryBtn').addEventListener('click', clearGallery);
-            
-            // Aspect ratio selection
-            document.querySelectorAll('.aspect-ratio-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.aspect-ratio-btn').forEach(b => b.classList.remove('bg-white/50'));
-                    e.target.classList.add('bg-white/50');
-                    selectedRatio = e.target.dataset.ratio;
-                });
-            });
-            
-            // Set default aspect ratio
-            document.querySelector('[data-ratio="1:1"]').classList.add('bg-white/50');
-            
-            // Real-time refinement controls
-            document.getElementById('brightnessSlider').addEventListener('input', updatePreview);
-            document.getElementById('contrastSlider').addEventListener('input', updatePreview);
-            document.getElementById('textOverlay').addEventListener('input', updateTextOverlay);
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+
+            // Drag and drop functionality
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+
+            // Text overlay functionality
+            document.getElementById('overlayText').addEventListener('input', updateTextOverlay);
             document.getElementById('textAlign').addEventListener('change', updateTextOverlay);
-            document.getElementById('textColor').addEventListener('change', updateTextOverlay);
-            document.getElementById('textSize').addEventListener('input', updateTextOverlay);
+            document.getElementById('fontSize').addEventListener('input', updateTextOverlay);
+
+            // Lighting controls
+            document.getElementById('brightness').addEventListener('input', updateLighting);
+            document.getElementById('contrast').addEventListener('input', updateLighting);
+            document.getElementById('saturation').addEventListener('input', updateLighting);
         }
 
-        function setupDragDrop() {
-            dropZone.addEventListener('click', () => imageInput.click());
-            
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('drag-over');
-            });
-            
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('drag-over');
-            });
-            
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag-over');
-                const files = Array.from(e.dataTransfer.files);
-                handleImageFiles(files);
-            });
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
         }
 
-        function setupCanvas() {
-            fabricCanvas = new fabric.Canvas('previewCanvas', {
-                width: 400,
-                height: 400,
-                backgroundColor: 'transparent'
-            });
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
         }
 
-        function handleImageUpload(event) {
-            const files = Array.from(event.target.files);
-            handleImageFiles(files);
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            processFiles(files);
         }
 
-        function handleImageFiles(files) {
-            uploadedImages = [];
-            imagePreview.innerHTML = '';
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
 
-            files.forEach((file, index) => {
-                if (file.size > 10 * 1024 * 1024) {
-                    showNotification(`File ${file.name} is too large (max 10MB)`, 'error');
-                    return;
+        function processFiles(files) {
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    uploadedFiles.push(file);
+                    displayUploadedImage(file);
                 }
+            });
+        }
 
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    uploadedImages.push({
-                        file: file,
-                        dataUrl: e.target.result,
-                        name: file.name
-                    });
+        function displayUploadedImage(file) {
+            const container = document.getElementById('uploadedImages');
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const div = document.createElement('div');
+                div.className = 'relative group';
+                div.innerHTML = `
+                    <img src="${e.target.result}" class="w-full h-20 object-cover rounded-lg image-preview">
+                    <button onclick="removeUploadedImage(${uploadedFiles.length - 1})" 
+                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        ×
+                    </button>
+                `;
+                container.appendChild(div);
+            };
+            
+            reader.readAsDataURL(file);
+        }
 
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = 'relative group';
-                    imgContainer.innerHTML = `
-                        <img src="${e.target.result}" class="image-preview">
-                        <button onclick="removeImage(${index})" 
-                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                            ×
-                        </button>
-                        <div class="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 rounded-b opacity-0 group-hover:opacity-100 transition-opacity">
-                            ${file.name}
-                        </div>
-                    `;
-                    imagePreview.appendChild(imgContainer);
-                };
-                reader.readAsDataURL(file);
+        function removeUploadedImage(index) {
+            uploadedFiles.splice(index, 1);
+            const container = document.getElementById('uploadedImages');
+            container.innerHTML = '';
+            uploadedFiles.forEach(file => displayUploadedImage(file));
+        }
+
+        function selectAspectRatio(ratio) {
+            selectedAspectRatio = ratio;
+            document.querySelectorAll('.aspect-ratio-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'bg-white/20');
+                btn.classList.add('bg-white/20');
+            });
+            document.querySelector(`[data-ratio="${ratio}"]`).classList.remove('bg-white/20');
+            document.querySelector(`[data-ratio="${ratio}"]`).classList.add('bg-primary');
+        }
+
+        function updateStyleOptions() {
+            const category = document.getElementById('styleCategory').value;
+            const subtypeSelect = document.getElementById('styleSubtype');
+            
+            const options = {
+                birthday: ['card', 'flier', 'poster', 'wish'],
+                wedding: ['card', 'flier', 'poster', 'wish'],
+                poster: ['with text', 'without text', 'minimal', 'detailed'],
+                cinematic: ['dramatic', 'soft', 'noir', 'vibrant'],
+                pinterest: ['image', 'gif', 'quotes', 'infographic'],
+                facebook: ['image post', 'quote post', 'story', 'cover'],
+                banner: ['web banner', 'social banner', 'promotional', 'minimalist'],
+                anime: ['manga style', 'chibi', 'realistic anime', 'studio ghibli'],
+                cyberpunk: ['neon', 'dark', 'futuristic', 'retro'],
+                steampunk: ['victorian', 'industrial', 'brass', 'mechanical'],
+                '3d': ['realistic', 'stylized', 'low poly', 'high detail'],
+                watercolor: ['soft', 'vibrant', 'abstract', 'realistic']
+            };
+
+            subtypeSelect.innerHTML = '';
+            options[category].forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option.charAt(0).toUpperCase() + option.slice(1);
+                subtypeSelect.appendChild(optionElement);
             });
 
-            // Reset state
-            isAnalyzed = false;
-            postAnalysisOptions.classList.add('hidden');
-            conceptEditor.classList.add('hidden');
-            updateStep(1);
+            selectedStyle.category = category;
+            selectedStyle.subtype = options[category][0];
         }
 
-        function removeImage(index) {
-            uploadedImages.splice(index, 1);
-            handleImageFiles(uploadedImages.map(img => img.file));
-        }
-
-        async function analyzeAndRemoveBackground() {
-            if (uploadedImages.length === 0) {
-                showNotification('Please upload at least one image first.', 'error');
-                return;
-            }
-
-            showLoading('Analyzing images with Gemini 2.5 Pro...', 'Detecting people and objects');
-            updateProgress(20);
-
-            try {
-                // Step 1: Analyze with Gemini
-                const analysisPrompt = `Analyze this image and detect:
-                1. Main subjects (people, objects, animals)
-                2. Background elements
-                3. Composition and lighting
-                4. Suggest optimal background removal strategy
-                
-                Provide a detailed analysis for professional image processing.`;
-
-                updateProgress(40);
-                statusDetail.textContent = 'Processing with Gemini AI...';
-
-                const analysis = await callGeminiAPI(analysisPrompt, uploadedImages[0].dataUrl);
-                
-                updateProgress(60);
-                statusDetail.textContent = 'Removing background with Nano Banana...';
-
-                // Step 2: Background removal (simulated)
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                updateProgress(100);
-                
-                isAnalyzed = true;
-                postAnalysisOptions.classList.remove('hidden');
-                hideLoading();
-                updateStep(2);
-                
-                showNotification('Analysis complete! Background removed successfully.', 'success');
-            } catch (error) {
-                console.error('Analysis error:', error);
-                hideLoading();
-                showNotification('Failed to analyze images. Please try again.', 'error');
-            }
+        function setBackgroundOption(option) {
+            backgroundOption = option;
+            document.querySelectorAll('[onclick^="setBackgroundOption"]').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-white');
+            });
+            event.target.classList.add('ring-2', 'ring-white');
         }
 
         async function generateConcept() {
-            const style = styleSelect.value;
-            const topic = topicInput.value;
-
-            showLoading('Generating creative concept with Gemini...', 'Creating detailed prompt');
-            updateProgress(30);
-
-            try {
-                const prompt = createConceptPrompt(style, topic);
-                const concept = await callGeminiAPI(prompt);
-                
-                updateProgress(100);
-                
-                conceptText.value = concept;
-                conceptEditor.classList.remove('hidden');
-                hideLoading();
-                updateStep(3);
-                
-                showNotification('Creative concept generated successfully!', 'success');
-            } catch (error) {
-                console.error('Concept generation error:', error);
-                hideLoading();
-                showNotification('Failed to generate concept. Please try again.', 'error');
+            const style = selectedStyle;
+            const aspectRatio = selectedAspectRatio;
+            const topic = document.getElementById('topicInput').value;
+            
+            // Simulate AI concept generation
+            const concepts = {
+                birthday: [
+                    "A vibrant celebration scene with colorful balloons, confetti, and warm lighting creating a joyful atmosphere perfect for birthday wishes",
+                    "Elegant birthday design with golden accents, soft pastels, and dreamy bokeh effects that capture the magic of special moments",
+                    "Fun and playful birthday theme with cartoon elements, bright colors, and festive decorations that bring smiles and happiness"
+                ],
+                wedding: [
+                    "Romantic wedding scene with soft florals, elegant typography, and dreamy lighting that captures the beauty of eternal love",
+                    "Classic wedding design with vintage elements, lace patterns, and warm golden tones creating timeless elegance",
+                    "Modern wedding aesthetic with clean lines, minimalist florals, and sophisticated color palette for contemporary couples"
+                ],
+                cinematic: [
+                    "Dramatic cinematic composition with moody lighting, deep shadows, and rich colors that tell a compelling visual story",
+                    "Epic movie poster style with dynamic angles, bold typography, and atmospheric effects that capture audience attention",
+                    "Film noir inspired design with high contrast, dramatic lighting, and mysterious atmosphere for sophisticated storytelling"
+                ]
+            };
+            
+            let selectedConcepts = concepts[style.category] || concepts.birthday;
+            let concept = selectedConcepts[Math.floor(Math.random() * selectedConcepts.length)];
+            
+            if (topic) {
+                concept = `${concept} incorporating themes of ${topic} with professional studio quality and attention to detail`;
             }
+            
+            document.getElementById('conceptPrompt').value = concept;
         }
 
-        async function generateImage(analyzed = false, useConcept = false) {
-            if (uploadedImages.length === 0 && !topicInput.value) {
-                showNotification('Please upload images or enter a topic.', 'error');
+        async function generateImage() {
+            if (uploadedFiles.length === 0) {
+                alert('Please upload at least one image first!');
                 return;
             }
 
-            showLoading('Creating masterpiece with Nano Banana...', 'Generating high-quality image');
-            updateProgress(20);
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const previewArea = document.getElementById('previewArea');
+            
+            loadingIndicator.classList.remove('hidden');
+            previewArea.innerHTML = '';
 
             try {
-                let prompt = '';
+                // Simulate API calls to Gemini and Nano Banana
+                await simulateImageGeneration();
                 
-                if (useConcept && conceptText.value) {
-                    prompt = conceptText.value;
-                } else {
-                    prompt = createImagePrompt();
-                }
-
-                updateProgress(50);
-                statusDetail.textContent = 'Processing with AI models...';
-
-                const imageUrl = await generateImageWithNanoBanana(prompt);
-                
-                updateProgress(100);
-                
-                await displayGeneratedImage(imageUrl);
-                hideLoading();
-                updateStep(4);
-                
-                showNotification('Image generated successfully!', 'success');
-            } catch (error) {
-                console.error('Image generation error:', error);
-                hideLoading();
-                showNotification('Failed to generate image. Please try again.', 'error');
-            }
-        }
-
-        async function generateVariation() {
-            if (!currentImage) return;
-            
-            showLoading('Generating variation...', 'Creating new version');
-            
-            try {
-                const prompt = `Create a variation of this image with the same style but different composition, colors, or elements. Maintain the same quality and aspect ratio ${selectedRatio}.`;
-                const imageUrl = await generateImageWithNanoBanana(prompt);
-                await displayGeneratedImage(imageUrl);
-                hideLoading();
-                showNotification('Variation generated!', 'success');
-            } catch (error) {
-                console.error('Variation error:', error);
-                hideLoading();
-                showNotification('Failed to generate variation.', 'error');
-            }
-        }
-
-        async function upscaleImage() {
-            if (!currentImage) return;
-            
-            showLoading('Upscaling image...', 'Enhancing resolution');
-            
-            try {
-                // Simulate upscaling with upscale-model-v2
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                // In production, this would call the actual upscaling API
-                hideLoading();
-                showNotification('Image upscaled to 2x resolution!', 'success');
-            } catch (error) {
-                console.error('Upscaling error:', error);
-                hideLoading();
-                showNotification('Failed to upscale image.', 'error');
-            }
-        }
-
-        function createConceptPrompt(style, topic) {
-            const styleDescriptions = {
-                'birthday-invitation-card': 'festive birthday invitation card with vibrant colors, balloons, confetti, and celebration elements',
-                'birthday-invitation-flier': 'eye-catching birthday invitation flier with party theme and joyful design',
-                'birthday-invitation-poster': 'large format birthday invitation poster with grand celebration design',
-                'birthday-wish-card': 'heartfelt birthday wish card with warm, personal design elements',
-                'birthday-wish-flier': 'colorful birthday wish flier with cheerful and uplifting theme',
-                'birthday-wish-poster': 'impressive birthday wish poster with celebratory grandeur',
-                'wedding-invitation-card': 'elegant wedding invitation card with romantic, sophisticated design',
-                'wedding-invitation-flier': 'beautiful wedding invitation flier with romantic elements',
-                'wedding-invitation-poster': 'grand wedding invitation poster with luxurious romantic design',
-                'wedding-wish-card': 'elegant wedding wish card with heartfelt, romantic design',
-                'wedding-wish-flier': 'romantic wedding wish flier with celebratory elements',
-                'wedding-wish-poster': 'luxurious wedding wish poster with grand romantic theme',
-                'normal-poster-no-text': 'clean, modern poster design without text overlay, focusing on visual impact',
-                'normal-flier-no-text': 'contemporary flier design without text, emphasizing visual appeal',
-                'normal-poster-with-text': 'professional poster design with integrated text and balanced composition',
-                'normal-flier-with-text': 'modern flier design with text elements and cohesive visual layout',
-                'cinematic-poster': 'dramatic cinematic poster with movie-style lighting and composition',
-                'pinterest-image': 'Pinterest-optimized image pin with engaging, shareable visual content',
-                'pinterest-gif': 'Pinterest GIF pin with animated elements and eye-catching design',
-                'pinterest-quotes': 'Pinterest text quotes pin with beautiful typography and inspiring background',
-                'facebook-image': 'Facebook image post optimized for social media engagement',
-                'facebook-quotes': 'Facebook text quotes post with inspiring design and typography',
-                'banner': 'professional banner design with clear messaging and strong visual impact',
-                'anime': 'anime-style artwork with vibrant colors, detailed character design, and Japanese animation aesthetics',
-                'cyberpunk': 'cyberpunk-themed design with neon colors, futuristic elements, and high-tech atmosphere',
-                'steampunk': 'steampunk-inspired design with Victorian-era meets industrial machinery aesthetics',
-                '3d-render': '3D rendered design with realistic lighting, textures, and dimensional depth',
-                '2d-illustration': '2D illustration with flat design elements, vector-style graphics, and clean lines',
-                'watercolor': 'watercolor art style with soft, flowing colors and organic, painterly textures'
-            };
-
-            return `Generate a detailed, professional creative concept (300+ characters) for a ${styleDescriptions[style] || style}. 
-                    ${topic ? `The theme should incorporate: ${topic}.` : ''} 
-                    
-                    Focus on:
-                    - Professional studio-quality design with cinematic lighting
-                    - Premium color schemes and sophisticated typography
-                    - High-end visual elements and immersive environments
-                    - Specific design elements, composition, and aesthetic details
-                    - Crystal clear details with upscaled quality appeal
-                    - Aspect ratio optimization for ${selectedRatio}
-                    
-                    Describe the visual concept in rich detail that would result in a stunning, professional masterpiece.`;
-        }
-
-        function createImagePrompt() {
-            const style = styleSelect.value;
-            const topic = topicInput.value;
-            const ratio = selectedRatio;
-
-            return `Create a professional, high-quality, studio-grade ${style.replace(/-/g, ' ')} design. 
-                   ${topic ? `Theme: ${topic}.` : ''} 
-                   Aspect ratio: ${ratio}. 
-                   Professional studio lighting, premium design elements, sophisticated color schemes, 
-                   cinematic quality, crystal clear details, upscaled resolution, immersive high-quality environments. 
-                   Ensure premium aesthetic appeal with professional typography and composition.`;
-        }
-
-        async function callGeminiAPI(prompt, imageData = null) {
-            const messages = [
-                {
-                    role: 'user',
-                    content: imageData ? [
-                        { type: 'text', text: prompt },
-                        { type: 'image_url', image_url: { url: imageData } }
-                    ] : prompt
-                }
-            ];
-
-            const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'HTTP-Referer': window.location.origin,
-                    'X-Title': 'AI Image Generator Pro'
-                },
-                body: JSON.stringify({
-                    model: 'google/gemini-2.0-flash-exp:free',
-                    messages: messages,
-                    max_tokens: 1000,
-                    temperature: 0.7
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`Gemini API request failed: ${response.status}`);
-            }
-
-            const data = await response.json();
-            return data.choices[0].message.content;
-        }
-
-        async function generateImageWithNanoBanana(prompt) {
-            try {
-                // Try to use Nano Banana model (replace with actual model name when available)
-                const response = await fetch(`${API_BASE_URL}/chat/completions`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${API_KEY}`,
-                        'Content-Type': 'application/json',
-                        'HTTP-Referer': window.location.origin,
-                        'X-Title': 'AI Image Generator Pro'
-                    },
-                    body: JSON.stringify({
-                        model: 'black-forest-labs/flux-1.1-pro', // Fallback to FLUX until Nano Banana is available
-                        messages: [
-                            {
-                                role: 'user',
-                                content: `Generate a high-quality image: ${prompt}`
-                            }
-                        ],
-                        max_tokens: 1000
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Image generation failed: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                // Look for image URL in response
-                const content = data.choices[0].message.content;
-                const urlMatch = content.match(/https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp)/i);
-                
-                if (urlMatch) {
-                    return urlMatch[0];
-                }
-                
-                // Fallback to placeholder
-                return createAdvancedPlaceholder(prompt);
+                // Display generated image
+                displayGeneratedImage();
                 
             } catch (error) {
-                console.error('Nano Banana generation failed:', error);
-                return createAdvancedPlaceholder(prompt);
+                console.error('Generation failed:', error);
+                alert('Image generation failed. Please try again.');
+            } finally {
+                loadingIndicator.classList.add('hidden');
             }
         }
 
-        function createAdvancedPlaceholder(prompt) {
+        async function simulateImageGeneration() {
+            // Simulate processing time
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Create a simulated generated image
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Calculate dimensions based on aspect ratio
-            const [width, height] = selectedRatio.split(':').map(Number);
-            const scale = 600;
-            canvas.width = (width / Math.max(width, height)) * scale;
-            canvas.height = (height / Math.max(width, height)) * scale;
+            // Set canvas size based on aspect ratio
+            const [width, height] = getCanvasDimensions(selectedAspectRatio);
+            canvas.width = width;
+            canvas.height = height;
             
-            // Create sophisticated gradient
-            const gradient = ctx.createRadialGradient(
-                canvas.width / 2, canvas.height / 2, 0,
-                canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height) / 2
-            );
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
             gradient.addColorStop(0, '#667eea');
-            gradient.addColorStop(0.5, '#764ba2');
-            gradient.addColorStop(1, '#f093fb');
-            
+            gradient.addColorStop(1, '#764ba2');
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, width, height);
             
-            // Add noise texture
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            for (let i = 0; i < data.length; i += 4) {
-                const noise = Math.random() * 20 - 10;
-                data[i] += noise;     // Red
-                data[i + 1] += noise; // Green
-                data[i + 2] += noise; // Blue
+            // Add some visual elements
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i < 20; i++) {
+                ctx.beginPath();
+                ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 50, 0, Math.PI * 2);
+                ctx.fill();
             }
-            ctx.putImageData(imageData, 0, 0);
             
-            // Add text with better typography
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = 'bold 32px Arial, sans-serif';
+            // Add text
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
             ctx.textAlign = 'center';
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-            ctx.shadowBlur = 10;
-            ctx.fillText('AI Generated', canvas.width / 2, canvas.height / 2 - 60);
+            ctx.fillText('AI Generated Image', width / 2, height / 2);
+            ctx.font = '16px Arial';
+            ctx.fillText(`${selectedStyle.category} - ${selectedAspectRatio}`, width / 2, height / 2 + 40);
             
-            ctx.font = '18px Arial, sans-serif';
-            ctx.shadowBlur = 5;
-            const words = prompt.split(' ').slice(0, 6).join(' ');
-            ctx.fillText(words + '...', canvas.width / 2, canvas.height / 2 - 20);
-            
-            ctx.font = '14px Arial, sans-serif';
-            ctx.fillText(`Style: ${styleSelect.options[styleSelect.selectedIndex].text}`, canvas.width / 2, canvas.height / 2 + 20);
-            ctx.fillText(`Ratio: ${selectedRatio}`, canvas.width / 2, canvas.height / 2 + 45);
-            
-            // Add decorative elements
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect(20, 20, canvas.width - 40, canvas.height - 40, 15);
-            ctx.stroke();
-            
-            return canvas.toDataURL('image/png');
-        }
-
-        async function displayGeneratedImage(imageUrl) {
-            currentImage = imageUrl;
-            
-            // Load image into fabric canvas
-            fabric.Image.fromURL(imageUrl, (img) => {
-                fabricCanvas.clear();
-                
-                // Scale image to fit canvas
-                const canvasWidth = 400;
-                const canvasHeight = 400;
-                const scale = Math.min(canvasWidth / img.width, canvasHeight / img.height);
-                
-                img.scale(scale);
-                img.set({
-                    left: (canvasWidth - img.width * scale) / 2,
-                    top: (canvasHeight - img.height * scale) / 2,
-                    selectable: false
-                });
-                
-                fabricCanvas.add(img);
-                fabricCanvas.renderAll();
+            const imageData = canvas.toDataURL('image/png');
+            generatedImages.push({
+                data: imageData,
+                timestamp: Date.now(),
+                style: selectedStyle,
+                aspectRatio: selectedAspectRatio,
+                prompt: document.getElementById('conceptPrompt').value
             });
-            
-            imageResult.classList.remove('hidden');
         }
 
-        function showRefinementPanel() {
-            refinementPanel.classList.remove('hidden');
-            refinementPanel.scrollIntoView({ behavior: 'smooth' });
+        function getCanvasDimensions(ratio) {
+            const ratios = {
+                '9:16': [450, 800],
+                '1:1': [600, 600],
+                '16:9': [800, 450],
+                '3:4': [600, 800],
+                '4:3': [800, 600],
+                '21:9': [840, 360]
+            };
+            return ratios[ratio] || [600, 600];
         }
 
-        function updatePreview() {
-            if (!fabricCanvas) return;
+        function displayGeneratedImage() {
+            const previewArea = document.getElementById('previewArea');
+            const latestImage = generatedImages[generatedImages.length - 1];
             
-            const brightness = document.getElementById('brightnessSlider').value;
-            const contrast = document.getElementById('contrastSlider').value;
+            previewArea.innerHTML = `
+                <div class="relative w-full h-full flex items-center justify-center">
+                    <img src="${latestImage.data}" class="max-w-full max-h-full rounded-lg shadow-lg fade-in" id="generatedImage">
+                    <div class="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+                        ${selectedAspectRatio}
+                    </div>
+                </div>
+            `;
             
-            const filter = `brightness(${100 + parseInt(brightness)}%) contrast(${100 + parseInt(contrast)}%)`;
-            fabricCanvas.getObjects().forEach(obj => {
-                if (obj.type === 'image') {
-                    obj.filters = [];
-                    if (brightness !== '0') {
-                        obj.filters.push(new fabric.Image.filters.Brightness({ brightness: parseInt(brightness) / 100 }));
-                    }
-                    if (contrast !== '0') {
-                        obj.filters.push(new fabric.Image.filters.Contrast({ contrast: parseInt(contrast) / 100 }));
-                    }
-                    obj.applyFilters();
-                }
-            });
+            currentImageIndex = generatedImages.length - 1;
+        }
+
+        function generateVariation() {
+            if (generatedImages.length === 0) {
+                alert('Generate an image first!');
+                return;
+            }
             
-            fabricCanvas.renderAll();
+            // Create a variation of the current image
+            generateImage();
+        }
+
+        function toggleRefinementPanel() {
+            const panel = document.getElementById('refinementPanel');
+            panel.classList.toggle('open');
         }
 
         function updateTextOverlay() {
-            const text = document.getElementById('textOverlay').value;
+            const text = document.getElementById('overlayText').value;
             const align = document.getElementById('textAlign').value;
-            const color = document.getElementById('textColor').value;
-            const size = document.getElementById('textSize').value;
+            const fontSize = document.getElementById('fontSize').value;
             
-            // Remove existing text objects
-            fabricCanvas.getObjects().forEach(obj => {
-                if (obj.type === 'text') {
-                    fabricCanvas.remove(obj);
-                }
-            });
+            if (!text) return;
             
-            if (text.trim()) {
-                const textObj = new fabric.Text(text, {
-                    left: fabricCanvas.width / 2,
-                    top: fabricCanvas.height - 50,
-                    fontSize: parseInt(size),
-                    fill: color,
-                    textAlign: align,
-                    originX: 'center',
-                    originY: 'center',
-                    shadow: 'rgba(0,0,0,0.5) 2px 2px 4px'
-                });
+            const previewArea = document.getElementById('previewArea');
+            let overlay = previewArea.querySelector('.text-overlay');
+            
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'text-overlay bg-black/50 text-white p-2 rounded';
+                overlay.style.top = '50%';
+                overlay.style.left = '50%';
+                overlay.style.transform = 'translate(-50%, -50%)';
+                previewArea.appendChild(overlay);
                 
-                fabricCanvas.add(textObj);
+                // Make draggable
+                makeDraggable(overlay);
             }
             
-            fabricCanvas.renderAll();
+            overlay.textContent = text;
+            overlay.style.textAlign = align;
+            overlay.style.fontSize = fontSize + 'px';
         }
 
-        function adjustBackground(action) {
-            if (!fabricCanvas) return;
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
             
-            fabricCanvas.getObjects().forEach(obj => {
-                if (obj.type === 'image') {
-                    if (action === 'blur') {
-                        obj.filters.push(new fabric.Image.filters.Blur({ blur: 0.1 }));
-                        obj.applyFilters();
-                    } else if (action === 'remove') {
-                        // Simulate background removal
-                        obj.set({ backgroundColor: 'transparent' });
-                    }
-                }
-            });
+            element.onmousedown = dragMouseDown;
             
-            fabricCanvas.renderAll();
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+                element.style.transform = 'none';
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
         }
 
-        function applySuggestion() {
-            const suggestion = document.getElementById('aiSuggestions').value;
-            if (!suggestion || !fabricCanvas) return;
+        function updateLighting() {
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            const saturation = document.getElementById('saturation').value;
             
-            fabricCanvas.getObjects().forEach(obj => {
-                if (obj.type === 'image') {
-                    switch (suggestion) {
-                        case 'enhance-lighting':
-                            obj.filters.push(new fabric.Image.filters.Brightness({ brightness: 0.1 }));
-                            break;
-                        case 'improve-colors':
-                            obj.filters.push(new fabric.Image.filters.Saturation({ saturation: 0.2 }));
-                            break;
-                        case 'add-depth':
-                            obj.set({ shadow: 'rgba(0,0,0,0.3) 5px 5px 10px' });
-                            break;
-                        case 'sharpen-details':
-                            obj.filters.push(new fabric.Image.filters.Convolute({
-                                matrix: [0, -1, 0, -1, 5, -1, 0, -1, 0]
-                            }));
-                            break;
-                        case 'artistic-filter':
-                            obj.filters.push(new fabric.Image.filters.Vintage());
-                            break;
-                    }
-                    obj.applyFilters();
-                }
-            });
-            
-            fabricCanvas.renderAll();
-            document.getElementById('aiSuggestions').value = '';
+            const image = document.getElementById('generatedImage');
+            if (image) {
+                image.style.filter = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+            }
         }
 
-        function applyRefinements() {
-            if (!fabricCanvas) return;
+        function applySuggestion(suggestion) {
+            const image = document.getElementById('generatedImage');
+            if (!image) return;
             
-            showLoading('Applying refinements...', 'Processing changes');
+            const effects = {
+                'enhance-colors': 'saturate(150%) contrast(110%)',
+                'add-glow': 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))',
+                'sharpen': 'contrast(120%) brightness(105%)',
+                'vintage': 'sepia(30%) contrast(90%) brightness(110%)'
+            };
             
-            setTimeout(() => {
-                const refinedImageUrl = fabricCanvas.toDataURL('image/png');
-                currentImage = refinedImageUrl;
-                
-                // Save to refinement history
-                refinementHistory.push({
-                    timestamp: Date.now(),
-                    imageUrl: refinedImageUrl,
-                    settings: {
-                        brightness: document.getElementById('brightnessSlider').value,
-                        contrast: document.getElementById('contrastSlider').value,
-                        text: document.getElementById('textOverlay').value
-                    }
-                });
-                
-                hideLoading();
-                showNotification('Refinements applied successfully!', 'success');
-            }, 1500);
+            image.style.filter = effects[suggestion] || '';
         }
 
         function savePreset() {
@@ -1158,194 +740,196 @@
             if (!name) return;
             
             const preset = {
-                brightness: document.getElementById('brightnessSlider').value,
-                contrast: document.getElementById('contrastSlider').value,
-                textAlign: document.getElementById('textAlign').value,
-                textColor: document.getElementById('textColor').value,
-                textSize: document.getElementById('textSize').value
+                name,
+                style: selectedStyle,
+                aspectRatio: selectedAspectRatio,
+                backgroundOption,
+                brightness: document.getElementById('brightness').value,
+                contrast: document.getElementById('contrast').value,
+                saturation: document.getElementById('saturation').value,
+                timestamp: Date.now()
             };
             
-            presets[name] = preset;
-            localStorage.setItem('refinementPresets', JSON.stringify(presets));
+            savedPresets.push(preset);
+            localStorage.setItem('aiImagePresets', JSON.stringify(savedPresets));
             loadPresets();
-            showNotification(`Preset "${name}" saved!`, 'success');
+            alert('Preset saved successfully!');
         }
 
-        function loadPreset() {
-            const presetName = document.getElementById('presetSelect').value;
-            if (!presetName || !presets[presetName]) return;
+        function applyRefinements() {
+            const refinement = {
+                brightness: document.getElementById('brightness').value,
+                contrast: document.getElementById('contrast').value,
+                saturation: document.getElementById('saturation').value,
+                textOverlay: document.getElementById('overlayText').value,
+                timestamp: Date.now()
+            };
             
-            const preset = presets[presetName];
-            document.getElementById('brightnessSlider').value = preset.brightness;
-            document.getElementById('contrastSlider').value = preset.contrast;
-            document.getElementById('textAlign').value = preset.textAlign;
-            document.getElementById('textColor').value = preset.textColor;
-            document.getElementById('textSize').value = preset.textSize;
-            
-            updatePreview();
-            updateTextOverlay();
+            refinementHistory.push(refinement);
+            alert('Refinements applied!');
         }
 
-        function loadPresets() {
-            const select = document.getElementById('presetSelect');
-            select.innerHTML = '<option value="">Load preset...</option>';
+        function downloadImage(format) {
+            if (generatedImages.length === 0) {
+                alert('No image to download!');
+                return;
+            }
             
-            Object.keys(presets).forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                select.appendChild(option);
-            });
+            const image = generatedImages[currentImageIndex];
+            const link = document.createElement('a');
+            link.download = `ai-generated-image-${Date.now()}.${format}`;
+            link.href = image.data;
+            link.click();
+        }
+
+        function upscaleImage() {
+            if (generatedImages.length === 0) {
+                alert('No image to upscale!');
+                return;
+            }
+            
+            // Simulate upscaling process
+            alert('Upscaling started! This may take a few moments...');
+            
+            setTimeout(() => {
+                alert('Image upscaled successfully! Download the enhanced version.');
+            }, 2000);
         }
 
         function saveToGallery() {
-            if (!currentImage) return;
+            if (generatedImages.length === 0) {
+                alert('No image to save!');
+                return;
+            }
             
-            const imageData = {
+            const image = generatedImages[currentImageIndex];
+            gallery.push({
+                ...image,
                 id: Date.now(),
-                url: currentImage,
-                style: styleSelect.value,
-                ratio: selectedRatio,
-                timestamp: new Date().toISOString(),
-                refinements: refinementHistory.length
-            };
-
-            gallery.unshift(imageData);
+                name: `Generated ${gallery.length + 1}`
+            });
+            
             localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
-            renderGallery();
-            
-            showNotification('Image saved to gallery!', 'success');
+            alert('Image saved to gallery!');
         }
 
-        function downloadImage() {
-            if (!currentImage) return;
-            
-            const link = document.createElement('a');
-            link.download = `ai-generated-${Date.now()}.png`;
-            link.href = currentImage;
-            link.click();
-            
-            showNotification('Image downloaded!', 'success');
+        function showGallery() {
+            document.getElementById('galleryModal').classList.remove('hidden');
+            loadGallery();
         }
 
-        function batchDownload() {
+        function closeGallery() {
+            document.getElementById('galleryModal').classList.add('hidden');
+        }
+
+        function loadGallery() {
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '';
+            
             if (gallery.length === 0) {
-                showNotification('No images in gallery to download.', 'error');
+                grid.innerHTML = '<p class="text-white/50 col-span-full text-center py-8">No images in gallery yet</p>';
                 return;
             }
             
-            showLoading('Preparing batch download...', 'Processing images');
-            
-            setTimeout(() => {
-                gallery.forEach((item, index) => {
-                    setTimeout(() => {
-                        const link = document.createElement('a');
-                        link.download = `ai-gallery-${index + 1}-${item.id}.png`;
-                        link.href = item.url;
-                        link.click();
-                    }, index * 500);
-                });
-                
-                hideLoading();
-                showNotification(`Downloading ${gallery.length} images...`, 'success');
-            }, 1000);
-        }
-
-        function clearGallery() {
-            if (confirm('Are you sure you want to clear the entire gallery?')) {
-                gallery = [];
-                localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
-                renderGallery();
-                showNotification('Gallery cleared.', 'success');
-            }
-        }
-
-        function renderGallery() {
-            galleryContainer.innerHTML = '';
-            
-            if (gallery.length === 0) {
-                galleryContainer.innerHTML = '<p class="text-white/70 col-span-2 text-center py-8">No images in gallery yet</p>';
-                return;
-            }
-
-            gallery.forEach((item, index) => {
-                const galleryItem = document.createElement('div');
-                galleryItem.className = 'gallery-item relative group cursor-pointer bg-white/10 rounded-lg overflow-hidden';
-                galleryItem.innerHTML = `
-                    <img src="${item.url}" class="w-full h-24 object-cover">
-                    <div class="p-2">
-                        <div class="text-white text-xs font-semibold truncate">${item.style}</div>
-                        <div class="text-white/70 text-xs">${item.ratio} • ${item.refinements || 0} edits</div>
+            gallery.forEach((image, index) => {
+                const div = document.createElement('div');
+                div.className = 'relative group cursor-pointer';
+                div.innerHTML = `
+                    <img src="${image.data}" class="w-full h-32 object-cover rounded-lg">
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                        <button onclick="loadFromGallery(${index})" class="bg-white text-black px-3 py-1 rounded mr-2">Load</button>
+                        <button onclick="deleteFromGallery(${index})" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
                     </div>
-                    <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
-                        <button onclick="viewGalleryImage(${index})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">
-                            View
-                        </button>
-                        <button onclick="deleteFromGallery(${index})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600">
-                            Delete
-                        </button>
-                    </div>
+                    <p class="text-white text-sm mt-1 truncate">${image.name}</p>
                 `;
-                
-                galleryContainer.appendChild(galleryItem);
+                grid.appendChild(div);
             });
         }
 
-        function viewGalleryImage(index) {
-            const item = gallery[index];
-            displayGeneratedImage(item.url);
-            imageResult.scrollIntoView({ behavior: 'smooth' });
+        function loadFromGallery(index) {
+            const image = gallery[index];
+            generatedImages.push(image);
+            currentImageIndex = generatedImages.length - 1;
+            displayGeneratedImage();
+            closeGallery();
         }
 
         function deleteFromGallery(index) {
-            gallery.splice(index, 1);
-            localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
-            renderGallery();
-            showNotification('Image deleted from gallery', 'success');
+            if (confirm('Delete this image from gallery?')) {
+                gallery.splice(index, 1);
+                localStorage.setItem('aiImageGallery', JSON.stringify(gallery));
+                loadGallery();
+            }
         }
 
-        function updateStep(step) {
-            currentStep = step;
-            document.querySelectorAll('.step-indicator').forEach((el, index) => {
-                el.classList.toggle('active', index + 1 <= step);
+        function showPresets() {
+            document.getElementById('presetsModal').classList.remove('hidden');
+            loadPresets();
+        }
+
+        function closePresets() {
+            document.getElementById('presetsModal').classList.add('hidden');
+        }
+
+        function loadPresets() {
+            const list = document.getElementById('presetsList');
+            list.innerHTML = '';
+            
+            if (savedPresets.length === 0) {
+                list.innerHTML = '<p class="text-white/50 text-center py-4">No presets saved yet</p>';
+                return;
+            }
+            
+            savedPresets.forEach((preset, index) => {
+                const div = document.createElement('div');
+                div.className = 'bg-white/10 rounded-lg p-4 flex justify-between items-center';
+                div.innerHTML = `
+                    <div>
+                        <h4 class="text-white font-medium">${preset.name}</h4>
+                        <p class="text-white/70 text-sm">${preset.style.category} - ${preset.aspectRatio}</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="applyPreset(${index})" class="bg-primary hover:bg-primary/80 text-white px-3 py-1 rounded">Apply</button>
+                        <button onclick="deletePreset(${index})" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Delete</button>
+                    </div>
+                `;
+                list.appendChild(div);
             });
         }
 
-        function showLoading(message, detail = '') {
-            statusText.textContent = message;
-            statusDetail.textContent = detail;
-            generationStatus.classList.remove('hidden');
-            imageResult.classList.add('hidden');
-            updateProgress(0);
-        }
-
-        function hideLoading() {
-            generationStatus.classList.add('hidden');
-        }
-
-        function updateProgress(percent) {
-            progressBar.style.width = `${percent}%`;
-        }
-
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white z-50 fade-in ${
-                type === 'success' ? 'bg-green-500' : 'bg-red-500'
-            }`;
-            notification.textContent = message;
+        function applyPreset(index) {
+            const preset = savedPresets[index];
             
-            document.body.appendChild(notification);
+            // Apply preset settings
+            selectedStyle = preset.style;
+            selectedAspectRatio = preset.aspectRatio;
+            backgroundOption = preset.backgroundOption;
             
-            setTimeout(() => {
-                notification.remove();
-            }, 4000);
+            // Update UI
+            document.getElementById('styleCategory').value = preset.style.category;
+            updateStyleOptions();
+            document.getElementById('styleSubtype').value = preset.style.subtype;
+            selectAspectRatio(preset.aspectRatio);
+            
+            // Apply lighting settings
+            document.getElementById('brightness').value = preset.brightness;
+            document.getElementById('contrast').value = preset.contrast;
+            document.getElementById('saturation').value = preset.saturation;
+            
+            closePresets();
+            alert('Preset applied successfully!');
         }
 
-        // Global functions for onclick handlers
-        window.removeImage = removeImage;
-        window.viewGalleryImage = viewGalleryImage;
-        window.deleteFromGallery = deleteFromGallery;
-        window.adjustBackground = adjustBackground;
+        function deletePreset(index) {
+            if (confirm('Delete this preset?')) {
+                savedPresets.splice(index, 1);
+                localStorage.setItem('aiImagePresets', JSON.stringify(savedPresets));
+                loadPresets();
+            }
+        }
+
+        // Initialize default aspect ratio selection
+        selectAspectRatio('1:1');
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98857b5c42c726f7',t:'MTc1OTQyMTU1Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98873a17d50426f7',t:'MTc1OTQzOTg1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
